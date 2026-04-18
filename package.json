@@ -9,7 +9,7 @@
     "build:client": "npm run build --workspace=client",
     "build:admin": "npm run build --workspace=admin",
     "start:api": "npm run start:prod --workspace=api",
-    "postinstall": "npm run db:generate --workspace=@pizza-platform/database"
+    "postinstall": "npx prisma generate --schema=packages/database/prisma/schema.prisma"
   },
   "workspaces": [
     "apps/*",
