@@ -16,7 +16,7 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("admin_token");
       if (!token) {
         window.location.href = "/login";
         return;

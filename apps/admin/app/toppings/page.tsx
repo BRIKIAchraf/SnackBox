@@ -30,7 +30,7 @@ export default function ToppingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("admin_token");
       await axios.post("https://api-production-48c5.up.railway.app/api/v1/toppings", {
         name: formData.name,
         price: parseFloat(formData.price),
@@ -46,7 +46,7 @@ export default function ToppingsPage() {
 
   const toggleAvailability = async (id: string, current: boolean) => {
       try {
-          const token = localStorage.getItem("token");
+          const token = localStorage.getItem("admin_token");
           await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, { available: !current }, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -57,7 +57,7 @@ export default function ToppingsPage() {
   const deleteTopping = async (id: string) => {
       if(!confirm("Supprimer cet ingrédient ?")) return;
       try {
-          const token = localStorage.getItem("token");
+          const token = localStorage.getItem("admin_token");
           await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });

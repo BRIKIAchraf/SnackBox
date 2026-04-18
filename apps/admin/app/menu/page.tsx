@@ -42,7 +42,7 @@ export default function MenuPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("admin_token");
       const data = new FormData();
       data.append("name", formData.name);
       data.append("description", formData.description);

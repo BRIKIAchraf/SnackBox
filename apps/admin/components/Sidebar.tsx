@@ -103,7 +103,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
       <div className={`py-6 border-t border-[var(--admin-border)] ${isCollapsed ? 'flex justify-center' : 'px-4'}`}>
         <button 
           onClick={() => {
-            localStorage.removeItem("token");
+            localStorage.removeItem("admin_token");
             window.location.href = "/login";
           }}
           className={`flex items-center gap-3 w-full rounded-xl text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-all font-black text-[10px] uppercase tracking-widest ${isCollapsed ? 'justify-center !w-12 !h-12 !px-0' : 'px-4 py-3'}`}
