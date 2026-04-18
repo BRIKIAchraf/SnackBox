@@ -8,6 +8,7 @@ import { useCartStore } from '../../store/cart-store';
 import { Navbar } from '../../components/Navbar';
 import { Logo } from '../../components/Logo';
 import { PizzaCard } from '../../components/PizzaCard';
+import { PizzaCustomizer } from '../../components/PizzaCustomizer';
 import { API_BASE } from '../../lib/api-config';
 
 export default function MenuPage() {
