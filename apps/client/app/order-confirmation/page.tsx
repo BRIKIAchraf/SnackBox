@@ -2,13 +2,13 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Navbar } from "../../components/Navbar";
-import { CheckCircle, Package, Truck, Pizza, ChevronRight, Share2 } from "lucide-react";
+import { CheckCircle, Package, Truck, Pizza, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
+import { API_BASE } from "../../lib/api-config";
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
   const [order, setOrder] = useState<any>(null);
@@ -16,16 +16,13 @@ export default function OrderConfirmationPage() {
 
   useEffect(() => {
     if (orderId) {
-      axios.get(`http://localhost:3002/api/v1/orders/${orderId}`).then(res => {
+      axios.get(`${API_BASE}/orders/${orderId}`).then(res => {
         setOrder(res.data);
       });
       // Polling every 5 seconds for status updates
       const interval = setInterval(() => {
-          axios.get(`http://localhost:3002/api/v1/orders/${orderId}`).then(res => {
+          axios.get(`${API_BASE}/orders/${orderId}`).then(res => {
             setOrder(res.data);
-            if (res.data.status === "PAID" || res.data.status === "CONFIRMED") {
-                // Keep polling or stop if it's the final state you want for this page
-            }
           });
       }, 5000);
       return () => clearInterval(interval);
@@ -90,4 +87,12 @@ export default function OrderConfirmationPage() {
       </motion.div>
     </main>
   );
+}
+
+export default function OrderConfirmationPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-primary font-black uppercase italic tracking-widest">Initialisation...</div>}>
+            <OrderConfirmationContent />
+        </Suspense>
+    );
 }
