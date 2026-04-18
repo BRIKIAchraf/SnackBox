@@ -1,11 +1,10 @@
-import { PrismaClient } from './generated/client/index.js';
+import { PrismaClient } from '@prisma/client';
 
 let prisma: PrismaClient;
 
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient();
 } else {
-  // Prevent multiple instances in development
   if (!(global as any).prisma) {
     (global as any).prisma = new PrismaClient();
   }
@@ -13,4 +12,4 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export { prisma, PrismaClient };
-export * from './generated/client/index.js';
+export * from '@prisma/client';
