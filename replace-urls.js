@@ -1,35 +1,43 @@
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
 
-// Use the synchronous or custom walker if glob fails, but we'll try a simple recursive function
 function walkSync(dir, filelist) {
-  files = fs.readdirSync(dir);
+  const files = fs.readdirSync(dir);
   filelist = filelist || [];
   files.forEach(function(file) {
-    if (fs.statSync(path.join(dir, file)).isDirectory()) {
+    const fullPath = path.join(dir, file);
+    if (fs.statSync(fullPath).isDirectory()) {
       if (file !== 'node_modules' && file !== '.next' && file !== 'dist') {
-        filelist = walkSync(path.join(dir, file), filelist);
+        filelist = walkSync(fullPath, filelist);
       }
-    }
-    else {
+    } else {
       if (file.endsWith('.ts') || file.endsWith('.tsx')) {
-        filelist.push(path.join(dir, file));
+        filelist.push(fullPath);
       }
     }
   });
   return filelist;
 }
 
+const targetUrl = 'api-production-48c5.up.railway.app';
+const secureUrl = 'https://api-production-48c5.up.railway.app';
+
 const allFiles = walkSync(path.join(__dirname, 'apps'));
 
 allFiles.forEach(file => {
   const content = fs.readFileSync(file, 'utf-8');
-  if (content.includes('http://localhost:3002')) {
-    const newContent = content.replace(/http:\/\/localhost:3002/g, 'https://api-production-48c5.up.railway.app');
-    fs.writeFileSync(file, newContent, 'utf-8');
-    console.log('Updated', file);
+  // Replace instances of targetUrl that ARE NOT already preceded by "https://"
+  // We use a simple strategy: replace all with secureUrl, then fix double https if any
+  if (content.includes(targetUrl)) {
+    let newContent = content.split(secureUrl).join(targetUrl); // normalize to no-https
+    newContent = newContent.split('http://' + targetUrl).join(targetUrl); 
+    newContent = newContent.split(targetUrl).join(secureUrl); // set all to https
+    
+    if (newContent !== content) {
+        fs.writeFileSync(file, newContent, 'utf-8');
+        console.log('Fixed HTTPS in:', file);
+    }
   }
 });
 
-console.log('Update complete.');
+console.log('Global HTTPS Enforcement complete.');
