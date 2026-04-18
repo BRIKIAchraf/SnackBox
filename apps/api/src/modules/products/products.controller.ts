@@ -56,6 +56,27 @@ export class ProductsController {
     return this.productsService.updateAvailability(id, available);
   }
 
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @UseInterceptors(FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './uploads/products',
+      filename: (req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+        return cb(null, `${randomName}${extname(file.originalname)}`);
+      }
+    })
+  }))
+  update(@Param('id') id: string, @Body() body: any, @UploadedFile() file: Express.Multer.File, @Request() req: any) {
+    const data = {
+        ...body,
+        price: body.price ? parseFloat(body.price) : undefined,
+        imagePath: file ? `/uploads/products/${file.filename}` : undefined
+    };
+    return this.productsService.update(id, data, req.user.userId);
+  }
+
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.productsService.softDelete(id);

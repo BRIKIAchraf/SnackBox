@@ -64,6 +64,27 @@ export class ProductsService {
     return product;
   }
 
+  async update(id: string, data: any, userId?: string) {
+    const product = await this.prisma.product.update({
+      where: { id },
+      data
+    });
+
+    await this.prisma.auditLog.create({
+        data: {
+            action: 'UPDATE_PRODUCT',
+            entity: 'PRODUCT',
+            entityId: id,
+            userId,
+            details: JSON.stringify(data)
+        }
+    });
+
+    await this.cacheManager.del('menu:products');
+    this.notificationsGateway.notifyMenuUpdate();
+    return product;
+  }
+
   // Toppings
   async findAllToppings() {
     return this.prisma.topping.findMany({

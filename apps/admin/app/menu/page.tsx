@@ -5,11 +5,14 @@ import axios from "axios";
 import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, Activity, Utensils } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { API_BASE } from "../../lib/api-config";
+
 export default function MenuPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   
   const [formData, setFormData] = useState<any>({
     name: "",
@@ -23,8 +26,8 @@ export default function MenuPage() {
   const fetchData = async () => {
     try {
       const [pRes, cRes] = await Promise.all([
-        axios.get("https://api-production-48c5.up.railway.app/api/v1/products"),
-        axios.get("https://api-production-48c5.up.railway.app/api/v1/categories")
+        axios.get(`${API_BASE}/products`),
+        axios.get(`${API_BASE}/categories`)
       ]);
       setProducts(pRes.data);
       setCategories(cRes.data);
@@ -39,6 +42,26 @@ export default function MenuPage() {
     fetchData();
   }, []);
 
+  const openAddModal = () => {
+    setEditingProduct(null);
+    setFormData({ name: "", description: "", price: "", categoryId: "", imageUrl: "" });
+    setSelectedFile(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (product: any) => {
+    setEditingProduct(product);
+    setFormData({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        categoryId: product.categoryId,
+        imageUrl: product.imageUrl || ""
+    });
+    setSelectedFile(null);
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -46,34 +69,39 @@ export default function MenuPage() {
       const data = new FormData();
       data.append("name", formData.name);
       data.append("description", formData.description);
-      data.append("price", formData.price);
+      data.append("price", formData.price.toString());
       data.append("categoryId", formData.categoryId);
+      
       if (selectedFile) {
           data.append("image", selectedFile);
-      } else {
+      } else if (formData.imageUrl) {
           data.append("imageUrl", formData.imageUrl);
       }
 
-      await axios.post("https://api-production-48c5.up.railway.app/api/v1/products", data, {
+      const config = {
           headers: { 
               "Content-Type": "multipart/form-data",
               "Authorization": `Bearer ${token}`
           }
-      });
+      };
+
+      if (editingProduct) {
+          await axios.patch(`${API_BASE}/products/${editingProduct.id}`, data, config);
+      } else {
+          await axios.post(`${API_BASE}/products`, data, config);
+      }
 
       setIsModalOpen(false);
-      setFormData({ name: "", description: "", price: "", categoryId: "", imageUrl: "" });
-      setSelectedFile(null);
       fetchData();
     } catch (e) {
       console.error(e);
-      alert("Error creating product");
+      alert(editingProduct ? "Error updating product" : "Error creating product");
     }
   };
 
   const toggleAvailability = async (id: string, current: boolean) => {
     try {
-      await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/products/${id}/availability`, { available: !current });
+      await axios.patch(`${API_BASE}/products/${id}/availability`, { available: !current });
       fetchData();
     } catch (e) { console.error(e); }
   };
@@ -81,7 +109,7 @@ export default function MenuPage() {
   const softDelete = async (id: string) => {
     if (!confirm("Are you sure? This will hide the product from the menu.")) return;
     try {
-      await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/products/${id}`);
+      await axios.delete(`${API_BASE}/products/${id}`);
       fetchData();
     } catch (e) { console.error(e); }
   };
@@ -94,7 +122,7 @@ export default function MenuPage() {
           <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Add, edit or disable products from your digital menu.</p>
         </div>
         <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             className="flex items-center gap-2 px-6 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-hover transition-all shadow-[0_0_30px_rgba(255,106,0,0.3)] active:scale-95"
         >
           <Plus className="w-5 h-5" /> ADD NEW PRODUCT
@@ -143,12 +171,15 @@ export default function MenuPage() {
                   <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/5">
                       <span className="text-xl font-black italic">{parseFloat(product.price).toFixed(2)}€</span>
                       <div className="flex gap-2">
-                          <button className="p-2.5 bg-white/5 hover:bg-primary/10 hover:text-primary rounded-xl transition-all border border-white/5">
+                          <button 
+                            onClick={() => openEditModal(product)}
+                            className="p-2.5 bg-white/5 hover:bg-primary/10 hover:text-primary rounded-xl transition-all border border-white/5"
+                          >
                               <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => softDelete(product.id)}
-                            className="p-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all border border-white/5"
+                            className="p-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all border border-white/10"
                           >
                               <Trash2 className="w-4 h-4" />
                           </button>
@@ -175,7 +206,9 @@ export default function MenuPage() {
                 className="relative w-full max-w-2xl bg-[#121215] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl"
             >
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                    <h2 className="text-2xl font-black italic uppercase italic tracking-tighter text-white">Add New Product</h2>
+                    <h2 className="text-2xl font-black italic uppercase italic tracking-tighter text-white">
+                        {editingProduct ? 'Edit Product' : 'Add New Product'}
+                    </h2>
                     <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X /></button>
                 </div>
 
@@ -240,7 +273,7 @@ export default function MenuPage() {
                     </div>
 
                     <button type="submit" className="w-full py-5 bg-primary rounded-2xl font-black uppercase text-sm italic tracking-widest shadow-2xl hover:bg-primary-hover transition-all">
-                        CREATE PRODUCT
+                        {editingProduct ? 'UPDATE PRODUCT' : 'CREATE PRODUCT'}
                     </button>
                 </form>
             </motion.div>

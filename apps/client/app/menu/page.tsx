@@ -18,7 +18,7 @@ export default function MenuPage() {
     const [loading, setLoading] = useState(true);
     const [selectedPizza, setSelectedPizza] = useState<any>(null);
     const [isCustomizing, setIsCustomizing] = useState(false);
-    
+
     const addItem = useCartStore((state: any) => state.addItem);
 
     const fetchData = async () => {
@@ -40,8 +40,8 @@ export default function MenuPage() {
         fetchData();
     }, []);
 
-    const filteredProducts = activeCategory === 'all' 
-        ? products 
+    const filteredProducts = activeCategory === 'all'
+        ? products
         : products.filter(p => p.categoryId === activeCategory);
 
     if (loading) return <div className="p-40 text-center font-black animate-pulse text-primary uppercase tracking-widest text-3xl italic">Préparation du Menu...</div>;
@@ -49,14 +49,14 @@ export default function MenuPage() {
     return (
         <main className="min-h-screen bg-[#050505] text-white">
             <Navbar />
-            
+
             {/* MENU HERO SECTION WITH BACKGROUND PHOTO */}
-            <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+            <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src="https://images.unsplash.com/photo-1593504049359-74330189a345?auto=format&fit=crop&q=80&w=2000" 
-                        className="w-full h-full object-cover grayscale opacity-50" 
-                        alt="Menu Background" 
+                    <img
+                        src="https://images.unsplash.com/photo-1593504049359-74330189a345?auto=format&fit=crop&q=80&w=2000"
+                        className="w-full h-full object-cover grayscale opacity-50"
+                        alt="Menu Background"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" />
                 </div>
@@ -74,7 +74,7 @@ export default function MenuPage() {
                     >
                         EXPLOREZ NOS SAVEURS
                     </motion.div>
-                    <motion.h1 
+                    <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-7xl md:text-9xl font-black italic uppercase italic tracking-tighter leading-none"
@@ -89,14 +89,14 @@ export default function MenuPage() {
                 <div className="container mx-auto px-6 py-12">
                     {/* Category selection */}
                     <div className="flex gap-3 overflow-x-auto pb-12 mask-fade scrollbar-hide">
-                        <button 
+                        <button
                             onClick={() => setActiveCategory('all')}
                             className={`flex items-center gap-3 px-8 py-5 rounded-full font-black uppercase text-xs tracking-widest transition-all whitespace-nowrap ${activeCategory === 'all' ? 'bg-primary text-black shadow-xl shadow-primary/20 scale-105' : 'bg-white/5 text-slate-500 hover:text-white border border-white/5 backdrop-blur-sm'}`}
                         >
                             <div className={`w-5 h-5 rounded-lg ${activeCategory === 'all' ? 'bg-black/20' : 'bg-white/10'}`} /> Toutes nos Recettes
                         </button>
                         {categories.map((cat) => (
-                            <button 
+                            <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
                                 className={`flex items-center gap-3 px-8 py-5 rounded-full font-black uppercase text-xs tracking-widest transition-all whitespace-nowrap ${activeCategory === cat.id ? 'bg-primary text-black shadow-xl shadow-primary/20 scale-105' : 'bg-white/5 text-slate-500 hover:text-white border border-white/5 backdrop-blur-sm'}`}
@@ -110,7 +110,7 @@ export default function MenuPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-12 pb-32">
                         <AnimatePresence mode='popLayout'>
                             {filteredProducts.map((product) => (
-                                <PizzaCard 
+                                <PizzaCard
                                     key={product.id}
                                     {...product}
                                     price={parseFloat(product.price)}
@@ -126,13 +126,13 @@ export default function MenuPage() {
             </div>
 
             {/* Customizer Modal */}
-            <PizzaCustomizer 
+            <PizzaCustomizer
                 isOpen={isCustomizing}
                 onClose={() => setIsCustomizing(false)}
                 pizza={selectedPizza}
                 onAddToCart={(customized) => {
-                    addItem({ 
-                        ...customized, 
+                    addItem({
+                        ...customized,
                         price: parseFloat(customized.price),
                         id: `${customized.id}-${Date.now()}`
                     });
