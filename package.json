@@ -7,7 +7,8 @@
     "build": "npm run build --workspaces",
     "build:api": "npm run build --workspace=api",
     "build:client": "npm run build --workspace=client",
-    "build:admin": "npm run build --workspace=admin"
+    "build:admin": "npm run build --workspace=admin",
+    "start:api": "npm run start:prod --workspace=api"
   },
   "workspaces": [
     "apps/*",
