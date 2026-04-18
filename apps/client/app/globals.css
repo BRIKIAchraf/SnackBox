@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;600;800;900&display=swap');
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  --background: #0B0B0B;
+  --surface: #1A1A1A;
+  --foreground: #FFFFFF;
+  --text-secondary: #BFBFBF;
+  --primary: #FF6A00; 
+  --primary-hover: #CC5500;
+  --glow-accent: rgba(255, 106, 0, 0.2);
+  
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  color: var(--foreground);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  /* Apply wood background to the whole site */
+  background: linear-gradient(rgba(11, 11, 11, 0.75), rgba(11, 11, 11, 0.85)), 
+              url('/client-wood.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+@layer base {
+  h1, h2, h3 { color: var(--foreground); }
+  p { color: var(--text-secondary); }
+}
+
+@keyframes snack-glow {
+  0% { box-shadow: 0 0 10px var(--glow-accent), inset 0 0 0px var(--primary); }
+  50% { box-shadow: 0 0 30px var(--glow-accent), inset 0 0 10px var(--primary); }
+  100% { box-shadow: 0 0 10px var(--glow-accent), inset 0 0 0px var(--primary); }
+}
+
+.animate-primary-glow {
+  animation: snack-glow 3s infinite ease-in-out;
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 15px var(--glow-accent);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--background);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+.wood-bg-overlay {
+  position: relative;
+  /* Transparent background here as it's already on the body */
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .wood-bg-overlay {
+    background-attachment: scroll;
+    background-image: linear-gradient(rgba(11, 11, 11, 0.7), rgba(11, 11, 11, 0.8)), url('/admin-bg.png');
+  }
+}
+
+/* Enhanced masks for fluid navigation between sections */
+.wood-section-mask-top {
+  mask-image: linear-gradient(to bottom, transparent, black 15%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%);
+}
+
+.wood-section-mask-bottom {
+  mask-image: linear-gradient(to top, transparent, black 15%);
+  -webkit-mask-image: linear-gradient(to top, transparent, black 15%);
+}
+
+.wood-section-mask-full {
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}

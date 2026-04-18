@@ -1,0 +1,212 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { Search, Eye, RefreshCcw, MoreHorizontal, X, User, MapPin, Phone, Clock, FileText } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const STATUS_MAP: Record<string, { label: string, color: string }> = {
+  PENDING_PAYMENT: { label: "En attente de paiement", color: "bg-orange-500/20 text-orange-400 border-orange-500/20" },
+  PAID: { label: "Payé", color: "bg-primary/20 text-primary border-primary/20" },
+  CONFIRMED: { label: "Confirmé", color: "bg-cyan-500/20 text-cyan-400 border-cyan-500/20" },
+  PREPARING: { label: "En préparation", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/20" },
+  BAKING: { label: "Au four", color: "bg-orange-500/20 text-orange-400 border-orange-500/20" },
+  READY: { label: "Prêt", color: "bg-green-500/20 text-green-400 border-green-500/20" },
+  DELIVERING: { label: "En livraison", color: "bg-purple-500/20 text-purple-400 border-purple-500/20" },
+  DELIVERED: { label: "Livré", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/20" },
+};
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get("http://localhost:3002/api/v1/orders");
+      setOrders(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+      try {
+          await axios.patch(`http://localhost:3002/api/v1/orders/${id}/status`, { status });
+          fetchOrders();
+      } catch (e) { console.error(e); }
+  }
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-black italic uppercase tracking-tighter">Gestion des Commandes</h1>
+          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Suivez et gérez les commandes clients en temps réel.</p>
+        </div>
+        <button onClick={fetchOrders} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+            <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin text-primary' : ''}`} />
+        </button>
+      </div>
+
+      <div className="flex gap-4">
+          <div className="flex-grow relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+              <input 
+                  type="text" 
+                  placeholder="Rechercher par ID ou client..." 
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-6 focus:outline-none focus:border-primary/50 transition-colors font-bold text-sm" 
+              />
+          </div>
+      </div>
+
+      <div className="stat-card overflow-hidden !p-0">
+          <table className="admin-table">
+              <thead>
+                  <tr>
+                      <th>ID Commande</th>
+                      <th>Articles</th>
+                      <th>Total</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-20 text-slate-500 font-bold italic">Aucune commande trouvée. La boutique est calme !</td>
+                      </tr>
+                  ) : orders.map((order) => (
+                    <motion.tr 
+                        key={order.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                    >
+                        <td className="font-mono text-xs text-primary font-bold">#{order.id.slice(0, 8).toUpperCase()}</td>
+                        <td>
+                            <div className="flex flex-col">
+                                {order.items.map((item: any) => (
+                                    <span key={item.id} className="text-sm font-semibold">{item.quantity}x {item.product.name}</span>
+                                ))}
+                            </div>
+                        </td>
+                        <td className="font-black">{parseFloat(order.total).toFixed(2)}€</td>
+                        <td>
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${STATUS_MAP[order.status]?.color || 'bg-slate-500/20 text-slate-400 border-slate-500/20'}`}>
+                                {STATUS_MAP[order.status]?.label || order.status}
+                            </span>
+                        </td>
+                        <td>
+                            <div className="flex items-center gap-2">
+                                <select 
+                                    className="bg-black border border-white/10 rounded-lg py-1 px-2 text-[10px] font-black outline-none cursor-pointer focus:border-primary/50"
+                                    onChange={(e) => updateStatus(order.id, e.target.value)}
+                                    value={order.status}
+                                >
+                                    {Object.keys(STATUS_MAP).map(k => <option key={k} value={k}>{STATUS_MAP[k].label}</option>)}
+                                </select>
+                                <button 
+                                    onClick={() => setSelectedOrder(order)}
+                                    className="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all border border-white/5"
+                                >
+                                    <Eye className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </td>
+                    </motion.tr>
+                  ))}
+              </tbody>
+          </table>
+      </div>
+
+      <AnimatePresence>
+          {selectedOrder && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedOrder(null)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                  <motion.div 
+                    initial={{ scale: 0.95, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }} 
+                    exit={{ scale: 0.95, opacity: 0 }} 
+                    className="relative w-full max-w-2xl bg-[#121215] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                  >
+                        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                            <div>
+                                <h2 className="text-2xl font-black italic uppercase tracking-tighter">Détails de la Commande</h2>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-widest">#{selectedOrder.id}</p>
+                            </div>
+                            <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X /></button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
+                            <div className="grid grid-cols-2 gap-8">
+                                <section className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <User className="w-3 h-3" /> Infos Client
+                                    </h4>
+                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-1">
+                                        <p className="font-black text-sm">{selectedOrder.customerName}</p>
+                                        <p className="text-xs font-bold text-slate-400 flex items-center gap-2"><Phone className="w-3 h-3" /> {selectedOrder.customerPhone || "N/A"}</p>
+                                    </div>
+                                </section>
+
+                                <section className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <MapPin className="w-3 h-3" /> Adresse de Livraison
+                                    </h4>
+                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-2">
+                                        <p className="text-xs font-bold text-slate-300">{selectedOrder.address}</p>
+                                        {selectedOrder.instructions && (
+                                            <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl">
+                                                <p className="text-[10px] font-black text-primary uppercase mb-1 flex items-center gap-1"><FileText className="w-3 h-3" /> Instructions</p>
+                                                <p className="text-xs italic text-slate-300">{selectedOrder.instructions}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            </div>
+
+                            <section className="space-y-4">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Contenu de la Commande</h4>
+                                <div className="space-y-3">
+                                    {selectedOrder.items.map((item: any) => (
+                                        <div key={item.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-black text-primary">{item.quantity}x</div>
+                                                <div>
+                                                    <p className="font-black uppercase italic text-sm">{item.product.name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500">{item.price.toFixed(2)}€ / unité</p>
+                                                </div>
+                                            </div>
+                                            <p className="font-black text-sm">{(item.quantity * item.price).toFixed(2)}€</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="p-8 bg-white/[0.02] border-t border-white/5 flex justify-between items-center mt-auto">
+                            <div className="flex items-center gap-4">
+                                <Clock className="w-5 h-5 text-slate-500" />
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                    Créée le : {new Date(selectedOrder.createdAt).toLocaleString('fr-FR')}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Général</p>
+                                <p className="text-3xl font-black text-primary italic">{parseFloat(selectedOrder.total).toFixed(2)}€</p>
+                            </div>
+                        </div>
+                  </motion.div>
+              </div>
+          )}
+      </AnimatePresence>
+    </div>
+  );
+}

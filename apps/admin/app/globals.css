@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  /* USER PROVIDED PALETTE - SNACK BOX ADMIN */
+  --admin-bg: #0B0B0B;
+  --admin-sidebar: #1A1A1A;
+  --admin-card: #1A1A1A;
+  --admin-border: rgba(255, 255, 255, 0.05);
+  --primary: #FF6A00;
+  --primary-hover: #CC5500;
+  --accent: #FF6A00;
+  --glow-subtle: rgba(255, 106, 0, 0.2);
+}
+
+body {
+  background-color: #050505;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  /* Composite background: Restored to the EXACT photo provided by the user */
+  background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.7)), 
+              url('/admin-bg-final.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Remove competing backgrounds from layout containers */
+.flex.bg-\[var\(--admin-bg\)\], 
+.bg-\[var\(--admin-bg\)\],
+main {
+  background-color: transparent !important;
+}
+
+.stat-card, aside, nav, .glass-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: #111111 !important; /* Pure solid dark color */
+  border: 2px solid var(--primary) !important; /* Highly visible orange border */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+aside {
+  background-color: #0A0A0A !important;
+  border-right: 1px solid var(--primary);
+}
+
+/* Ensure text is highly visible (no more grey) */
+span, p, h1, h2, h3, h4, h5, h6, th, td {
+  color: #FFFFFF !important;
+}
+
+.text-slate-400, .text-gray-400, .text-slate-500 {
+  color: #FFFFFF !important; /* Force visibility */
+}
+
+.text-primary {
+  color: var(--primary) !important;
+  font-weight: 900;
+}
+
+/* Enhanced visibility for indicator badges */
+.badge, [class*="status-"] {
+  background-color: var(--primary) !important;
+  color: black !important;
+  font-weight: 800;
+  border: none !important;
+}
