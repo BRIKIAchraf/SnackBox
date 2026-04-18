@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Lock, Mail, ChevronRight, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Logo } from "../../components/Logo";
+import { API_BASE } from "../../lib/api-config";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.post("https://api-production-48c5.up.railway.app/api/v1/auth/login", { email, password });
+      const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
       
       if (data.user.role !== 'ADMIN' && data.user.role !== 'MANAGER') {
           throw new Error("Unauthorized access. Admin privileges required.");

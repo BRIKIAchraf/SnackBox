@@ -15,15 +15,10 @@ async function bootstrap() {
     : ['http://localhost:3000', 'http://localhost:3001'];
 
   app.enableCors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-            callback(null, true);
-        } else {
-            callback(null, true); // Fallback to allow everything if debug
-        }
-    },
+    origin: true, // Allow all origins to resolve CORS once and for all during deployment
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: 'Content-Type,Accept,Authorization',
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
