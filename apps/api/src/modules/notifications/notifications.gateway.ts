@@ -4,7 +4,9 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST'],
   },
 })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
