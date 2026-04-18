@@ -9,13 +9,14 @@
     "build:client": "npm run build --workspace=client",
     "build:admin": "npm run build --workspace=admin",
     "start:api": "npm run start:prod --workspace=api",
-    "postinstall": "npx prisma generate --schema=packages/database/prisma/schema.prisma"
+    "postinstall": "npx prisma@5.13.0 generate --schema=packages/database/prisma/schema.prisma"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prisma": "5.13.0"
   }
 }
