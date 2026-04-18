@@ -8,7 +8,8 @@
     "build:api": "npm run build --workspace=api",
     "build:client": "npm run build --workspace=client",
     "build:admin": "npm run build --workspace=admin",
-    "start:api": "npm run start:prod --workspace=api"
+    "start:api": "npm run start:prod --workspace=api",
+    "postinstall": "npm run db:generate --workspace=@pizza-platform/database"
   },
   "workspaces": [
     "apps/*",
