@@ -8,6 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   app.useGlobalFilters(new AllExceptionsFilter());
+  // Production Sync: Forced rebuild to update Prisma Client references
   app.setGlobalPrefix('api/v1');
   const allowedOrigins = process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(',') 
