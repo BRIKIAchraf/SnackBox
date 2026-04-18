@@ -8,13 +8,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   app.useGlobalFilters(new AllExceptionsFilter());
-  // Build Trigger Sync: V1.1.2 - Product Patch Activation
+  // Build Trigger Sync: V1.1.3 - Offers & Packs Module
   app.setGlobalPrefix('api/v1');
   const allowedOrigins = process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(',') 
     : ['http://localhost:3000', 'http://localhost:3001'];
 
-  logger.log('🚀 Finalizing CORS and API Routes V1.1.2...');
+  logger.log('🚀 Finalizing CORS and API Routes V1.1.3...');
   app.enableCors({
     origin: true, // Allow all origins to resolve CORS once and for all during deployment
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

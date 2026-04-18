@@ -10,7 +10,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-    const { items, getTotal, clearCart, errors, setErrors } = useCartStore();
+    const { items, offers, getTotal, clearCart, errors, setErrors } = useCartStore();
     const [loading, setLoading] = useState(false);
     const [deliveryZones, setDeliveryZones] = useState<any[]>([]);
     const [selectedZone, setSelectedZone] = useState<any>(null);
@@ -33,13 +33,20 @@ export default function CheckoutPage() {
 
     // Strict validation on mount & when items change
     useEffect(() => {
-        if (items.length > 0) {
+        if (items.length > 0 || offers.length > 0) {
             axios.post("https://api-production-48c5.up.railway.app/api/v1/orders/validate-cart", {
                 items: items.map(i => ({ 
                     productId: i.id, 
                     price: i.price, 
                     quantity: i.quantity, 
                     name: i.name 
+                })),
+                offers: offers.map(o => ({
+                    offerId: o.offerId,
+                    price: o.price,
+                    quantity: o.quantity,
+                    name: o.name,
+                    customOptions: o.customOptions
                 }))
             }).then(res => {
                 if (!res.data.valid) {
@@ -49,7 +56,7 @@ export default function CheckoutPage() {
                 }
             }).catch(console.error);
         }
-    }, [items, setErrors]);
+    }, [items, offers, setErrors]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -84,6 +91,13 @@ export default function CheckoutPage() {
                     quantity: i.quantity, 
                     name: i.name,
                     toppings: i.toppings || []
+                })),
+                offers: offers.map(o => ({
+                    offerId: o.offerId,
+                    price: o.price,
+                    quantity: o.quantity,
+                    name: o.name,
+                    options: JSON.stringify(o.customOptions || [])
                 })),
                 deliveryZoneId: selectedZone?.id,
                 address: `${formData.address}, ${formData.zipCode} ${formData.city}`,
@@ -124,7 +138,7 @@ export default function CheckoutPage() {
     const deliveryFee = selectedZone?.fee || 0;
     const finalTotal = getTotal() + deliveryFee;
 
-    if (items.length === 0) {
+    if (items.length === 0 && offers.length === 0) {
         return (
             <main className="min-h-screen bg-black flex items-center justify-center p-6">
                 <div className="text-center space-y-8">
@@ -232,7 +246,7 @@ export default function CheckoutPage() {
                     <div className="bg-[#111] border border-white/5 rounded-[4rem] overflow-hidden">
                         <div className="p-12 border-b border-white/5 flex items-center justify-between">
                             <h2 className="text-2xl font-black uppercase italic italic">VOTRE COMMANDE</h2>
-                            <span className="bg-primary text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase">{items.length} PIZZA(S)</span>
+                            <span className="bg-primary text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase">{items.length + offers.length} ARTICLE(S)</span>
                         </div>
 
                         <div className="p-12 space-y-8">

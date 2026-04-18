@@ -95,6 +95,7 @@ model Order {
   deliveryZone   DeliveryZone? @relation(fields: [deliveryZoneId], references: [id])
   user           User?         @relation(fields: [userId], references: [id])
   items          OrderItem[]
+  offers         OrderOfferItem[]
   payment        Payment?
 }
 
@@ -108,6 +109,30 @@ model OrderItem {
   product   Product            @relation(fields: [productId], references: [id])
   order     Order              @relation(fields: [orderId], references: [id])
   toppings  OrderItemTopping[]
+}
+
+model Offer {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  available   Boolean     @default(true)
+  isDeleted   Boolean     @default(false)
+  imagePath   String?
+  imageUrl    String?     // Keeping for backward compatibility
+  orderItems  OrderOfferItem[]
+}
+
+model OrderOfferItem {
+  id        String             @id @default(uuid())
+  orderId   String
+  offerId   String
+  quantity  Int
+  price     Float // Snapshot of pack price including variations
+  name      String // Snapshot of pack name
+  options   String? // JSON storing the user's custom pack config (ingredients, drinks)
+  offer     Offer              @relation(fields: [offerId], references: [id])
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItemTopping {

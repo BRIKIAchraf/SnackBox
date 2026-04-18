@@ -12,7 +12,7 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
-  const { items, removeItem, updateQuantity, getTotal } = useCartStore();
+  const { items, offers, removeItem, updateQuantity, removeOffer, updateOfferQuantity, getTotal } = useCartStore();
   const FREE_DELIVERY_THRESHOLD = 30;
   const total = getTotal();
   const progress = Math.min((total / FREE_DELIVERY_THRESHOLD) * 100, 100);
@@ -41,12 +41,12 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 <div className="relative">
                     <ShoppingBag className="w-6 h-6 text-primary" />
                     <motion.span 
-                        key={items.length}
+                        key={items.length + offers.length}
                         initial={{ scale: 1.5, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="absolute -top-2 -right-2 bg-primary text-black text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-black"
                     >
-                        {items.length}
+                        {items.length + offers.length}
                     </motion.span>
                 </div>
                 <h2 className="text-xl font-black italic uppercase italic tracking-widest text-white">VOTRE PANIER</h2>
@@ -75,7 +75,7 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
 
             {/* ITEMS LIST */}
             <div className="flex-grow overflow-y-auto p-10 space-y-10 custom-scrollbar">
-              {items.length === 0 ? (
+              {items.length === 0 && offers.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
                   <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/5 relative">
                     <Pizza className="w-12 h-12 text-white/10" />
@@ -90,6 +90,42 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               ) : (
                 <LayoutGroup>
                     <AnimatePresence>
+                        {/* Render OFFERS first */}
+                        {offers.map((offer) => (
+                        <motion.div 
+                            layout
+                            key={offer.id} 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: 50 }}
+                            className="flex gap-6 group relative bg-primary/5 p-3 rounded-3xl border border-primary/20"
+                        >
+                            <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-white/5 p-1 border border-white/5 group-hover:border-primary/20 transition-all">
+                                <Image src={offer.imageUrl || ""} alt={offer.name} fill sizes="96px" className="object-cover rounded-xl group-hover:scale-110 transition-transform duration-700" />
+                            </div>
+                            <div className="flex-grow flex flex-col justify-center">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="pr-4">
+                                        <span className="text-[8px] bg-primary text-white px-2 py-0.5 rounded uppercase font-black tracking-widest mb-1 inline-block">PACK</span>
+                                        <h4 className="font-black text-xs uppercase tracking-tight text-primary leading-tight">{offer.name}</h4>
+                                    </div>
+                                    <button onClick={() => removeOffer(offer.id)} className="text-slate-600 hover:text-red-500 transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between mt-auto">
+                                    <span className="text-sm font-black text-white italic">{offer.price.toFixed(2)}€</span>
+                                    <div className="flex items-center gap-4 bg-white/5 rounded-2xl p-1 border border-white/10">
+                                        <button onClick={() => updateOfferQuantity(offer.id, offer.quantity - 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-xl transition-all text-white"><Minus className="w-3 h-3" /></button>
+                                        <span className="text-xs font-black w-4 text-center text-white">{offer.quantity}</span>
+                                        <button onClick={() => updateOfferQuantity(offer.id, offer.quantity + 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-xl transition-all text-white"><Plus className="w-3 h-3" /></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                        ))}
+
+                        {/* Render ITEMS */}
                         {items.map((item) => (
                         <motion.div 
                             layout

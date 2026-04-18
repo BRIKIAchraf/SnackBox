@@ -48,16 +48,18 @@ export class OrdersService {
     return true;
   }
 
-  async validateCart(items: any[], deliveryZoneId?: string) {
+  async validateCart(items: any[] = [], offers: any[] = [], deliveryZoneId?: string) {
     const corrections = [];
     let updatedTotal = 0;
     const validatedItems = [];
+    const validatedOffers = [];
 
     const isOpen = await this.validateTime();
     if (!isOpen) {
         corrections.push("Le restaurant est actuellement fermé.");
     }
 
+    // Validation des produits standards
     for (const item of items) {
       const product = await this.prisma.product.findUnique({
         where: { id: item.productId }
@@ -72,7 +74,7 @@ export class OrdersService {
         corrections.push(`${product.name} est actuellement indisponible.`);
       }
 
-      if (product.price !== item.price) {
+      if (product.price !== item.basePrice && product.price !== item.price) {
         corrections.push(`Le prix de ${product.name} a changé.`);
       }
 
@@ -98,8 +100,35 @@ export class OrdersService {
         ...item,
         price: product.price,
         name: product.name,
-        available: product.available,
         actualToppings: validatedToppings
+      });
+    }
+
+    // Validation des offres
+    for (const offer of offers) {
+      const dbOffer = await this.prisma.offer.findUnique({
+         where: { id: offer.offerId }
+      });
+
+      if (!dbOffer || dbOffer.isDeleted) {
+         corrections.push(`${offer.name} n'existe plus.`);
+         continue;
+      }
+      if (!dbOffer.available) {
+         corrections.push(`L'offre ${dbOffer.name} est actuellement indisponible.`);
+      }
+      
+      // Since an offer can have custom textual options (ex: drinks added) that change the price on the client side,
+      // For now we accept the price sent by the client for the customized offer package, but we enforce a minimum base price.
+      if (offer.price < dbOffer.price) {
+         corrections.push(`Le prix de l'offre ${dbOffer.name} est incohérent.`);
+      }
+
+      updatedTotal += offer.price * offer.quantity;
+      validatedOffers.push({
+         ...offer,
+         name: dbOffer.name,
+         options: JSON.stringify(offer.customOptions || []) // We store custom selections here
       });
     }
 
@@ -119,13 +148,18 @@ export class OrdersService {
       corrections,
       updatedTotal,
       validatedItems,
+      validatedOffers,
       deliveryFee
     };
   }
 
   async create(data: any) {
-    const validation = await this.validateCart(data.items, data.deliveryZoneId);
+    const validation = await this.validateCart(data.items || [], data.offers || [], data.deliveryZoneId);
     
+    if (!validation.valid) {
+      throw new BadRequestException({ message: "Cart error", corrections: validation.corrections });
+    }
+
     const order = await this.prisma.order.create({
       data: {
         total: validation.updatedTotal,
@@ -136,7 +170,6 @@ export class OrdersService {
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
-        // Since schema uses a relation to Address model, we use addressId or connect
         address: data.addressId ? { connect: { id: data.addressId } } : undefined,
         user: data.userId ? { connect: { id: data.userId } } : undefined,
         deliveryZone: data.deliveryZoneId ? { connect: { id: data.deliveryZoneId } } : undefined,
@@ -154,9 +187,18 @@ export class OrdersService {
               }))
             }
           }))
+        },
+        offers: {
+            create: validation.validatedOffers.map((offer: any) => ({
+                offerId: offer.offerId,
+                quantity: offer.quantity,
+                price: offer.price,
+                name: offer.name,
+                options: offer.options
+            }))
         }
       },
-      include: { items: { include: { toppings: true } } }
+      include: { items: { include: { toppings: true } }, offers: true }
     });
 
     await this.prisma.auditLog.create({

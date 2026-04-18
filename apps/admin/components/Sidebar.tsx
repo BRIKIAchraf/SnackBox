@@ -15,7 +15,8 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  Utensils
+  Utensils,
+  Gift
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +25,7 @@ const MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Tableau de Bord", href: "/dashboard" },
   { icon: ShoppingBag, label: "Commandes", href: "/orders" },
   { icon: Utensils, label: "Menu", href: "/menu" },
+  { icon: Gift, label: "Packs & Offres", href: "/offers" },
   { icon: Zap, label: "Ingrédients", href: "/toppings" },
   { icon: Users, label: "Clients", href: "/customers" },
   { icon: MapPin, label: "Zones de Livraison", href: "/delivery-zones" },

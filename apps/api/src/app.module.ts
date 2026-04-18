@@ -17,6 +17,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { OffersModule } from './modules/offers/offers.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
@@ -52,6 +53,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     ToppingsModule,
     AuditLogsModule,
     PaymentsModule,
+    OffersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -91,9 +91,17 @@ export default function OrdersPage() {
                     >
                         <td className="font-mono text-xs text-primary font-bold">#{order.id.slice(0, 8).toUpperCase()}</td>
                         <td>
-                            <div className="flex flex-col">
-                                {order.items.map((item: any) => (
-                                    <span key={item.id} className="text-sm font-semibold">{item.quantity}x {item.product.name}</span>
+                            <div className="flex flex-col gap-1">
+                                {order.offers && order.offers.map((offer: any) => (
+                                    <span key={`offer-${offer.id}`} className="text-sm font-black text-primary">
+                                        <span className="text-[10px] px-1 bg-primary text-white rounded mr-1">PACK</span>
+                                        {offer.quantity}x {offer.name}
+                                    </span>
+                                ))}
+                                {order.items?.map((item: any) => (
+                                    <span key={`item-${item.id}`} className="text-sm font-semibold text-slate-300">
+                                        {item.quantity}x {item.product?.name || item.name}
+                                    </span>
                                 ))}
                             </div>
                         </td>
@@ -175,18 +183,51 @@ export default function OrdersPage() {
                             <section className="space-y-4">
                                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Contenu de la Commande</h4>
                                 <div className="space-y-3">
-                                    {selectedOrder.items.map((item: any) => (
+                                    {selectedOrder.items?.map((item: any) => (
                                         <div key={item.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center font-black text-primary">{item.quantity}x</div>
                                                 <div>
-                                                    <p className="font-black uppercase italic text-sm">{item.product.name}</p>
+                                                    <p className="font-black uppercase italic text-sm">{item.product?.name || item.name}</p>
                                                     <p className="text-[10px] font-bold text-slate-500">{item.price.toFixed(2)}€ / unité</p>
                                                 </div>
                                             </div>
                                             <p className="font-black text-sm">{(item.quantity * item.price).toFixed(2)}€</p>
                                         </div>
                                     ))}
+
+                                    {/* Section spéciale pour les Packs (Offres) */}
+                                    {selectedOrder.offers && selectedOrder.offers.map((offer: any) => {
+                                        let parsedOptions: string[] = [];
+                                        try {
+                                            parsedOptions = JSON.parse(offer.options || "[]");
+                                        } catch (e) {}
+                                        return (
+                                        <div key={offer.id} className="flex flex-col p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-2xl border border-primary/20">
+                                            <div className="flex justify-between items-center w-full">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-primary/20 text-primary rounded-lg flex items-center justify-center font-black">{offer.quantity}x</div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="px-2 py-0.5 bg-primary text-white text-[8px] font-black uppercase rounded">PACK</span>
+                                                            <p className="font-black uppercase italic text-sm text-white">{offer.name}</p>
+                                                        </div>
+                                                        <p className="text-[10px] font-bold text-slate-500 mt-1">{offer.price.toFixed(2)}€ / unité</p>
+                                                    </div>
+                                                </div>
+                                                <p className="font-black text-sm text-primary">{(offer.quantity * offer.price).toFixed(2)}€</p>
+                                            </div>
+                                            {parsedOptions.length > 0 && (
+                                                <div className="mt-4 pl-14 space-y-1">
+                                                    {parsedOptions.map((opt, i) => (
+                                                        <p key={i} className="text-xs font-bold text-slate-400 flex items-center gap-2">
+                                                            <span className="w-1 h-1 rounded-full bg-primary" /> {opt}
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )})}
                                 </div>
                             </section>
                         </div>

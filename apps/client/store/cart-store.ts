@@ -10,11 +10,25 @@ interface CartItem {
   toppings?: string[];
 }
 
+export interface CartOffer {
+  id: string; // unique cart id for the configured offer
+  offerId: string;
+  name: string;
+  price: number; // configured total price
+  quantity: number;
+  imageUrl?: string;
+  customOptions: string[];
+}
+
 interface CartStore {
   items: CartItem[];
+  offers: CartOffer[];
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  addOffer: (offer: CartOffer) => void;
+  removeOffer: (id: string) => void;
+  updateOfferQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   getTotal: () => number;
   errors: string[];
@@ -25,6 +39,7 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      offers: [],
       errors: [],
       setErrors: (errors) => set({ errors }),
       addItem: (item) => {
@@ -53,9 +68,28 @@ export const useCartStore = create<CartStore>()(
           ),
         });
       },
-      clearCart: () => set({ items: [] }),
+      addOffer: (offer) => {
+        set({ offers: [...get().offers, offer] });
+      },
+      removeOffer: (id) => {
+        set({ offers: get().offers.filter((o) => o.id !== id) });
+      },
+      updateOfferQuantity: (id, quantity) => {
+        if (quantity <= 0) {
+          get().removeOffer(id);
+          return;
+        }
+        set({
+          offers: get().offers.map((o) =>
+            o.id === id ? { ...o, quantity } : o
+          ),
+        });
+      },
+      clearCart: () => set({ items: [], offers: [] }),
       getTotal: () => {
-        return get().items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const itemsTotal = get().items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const offersTotal = get().offers.reduce((acc, offer) => acc + offer.price * offer.quantity, 0);
+        return itemsTotal + offersTotal;
       },
     }),
     {

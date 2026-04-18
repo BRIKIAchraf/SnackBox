@@ -15,7 +15,8 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const cartItems = useCartStore((state) => state.items);
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartOffers = useCartStore((state) => state.offers);
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0) + cartOffers.reduce((acc, offer) => acc + offer.quantity, 0);
 
   const [user, setUser] = useState<any>(null);
 
