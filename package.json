@@ -1,0 +1,19 @@
+{
+  "name": "pizza-platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run start:dev --workspace=api\" \"npm run dev --workspace=client -- -p 3000\" \"npm run dev --workspace=admin -- -p 3001\"",
+    "dev:mem": "NODE_OPTIONS='--max-old-space-size=4096' npm run dev",
+    "build": "npm run build --workspaces",
+    "build:api": "npm run build --workspace=api",
+    "build:client": "npm run build --workspace=client",
+    "build:admin": "npm run build --workspace=admin"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

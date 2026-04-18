@@ -1,0 +1,61 @@
+$directories = @(
+    "packages/database/prisma",
+    "packages/types/src/enums",
+    "packages/types/src/dtos",
+    "packages/types/src/responses",
+    "packages/ui/components",
+    "packages/config",
+    "apps/client/app/menu",
+    "apps/client/app/cart",
+    "apps/client/app/checkout",
+    "apps/client/app/order-confirmation",
+    "apps/client/app/contact",
+    "apps/client/app/delivery-zones",
+    "apps/client/components",
+    "apps/client/services",
+    "apps/client/store",
+    "apps/client/hooks",
+    "apps/client/e2e",
+    "apps/admin/app/dashboard",
+    "apps/admin/app/orders",
+    "apps/admin/app/menu",
+    "apps/admin/app/categories",
+    "apps/admin/app/toppings",
+    "apps/admin/app/customers",
+    "apps/admin/app/settings",
+    "apps/admin/app/delivery-zones",
+    "apps/admin/app/contact-messages",
+    "apps/api/src/modules/auth",
+    "apps/api/src/modules/users",
+    "apps/api/src/modules/products",
+    "apps/api/src/modules/categories",
+    "apps/api/src/modules/toppings",
+    "apps/api/src/modules/orders",
+    "apps/api/src/modules/payments/webhooks",
+    "apps/api/src/modules/delivery-zones",
+    "apps/api/src/modules/contact",
+    "apps/api/src/modules/permissions/roles",
+    "apps/api/src/modules/cart",
+    "apps/api/src/common/guards",
+    "apps/api/src/common/rate-limiter",
+    "apps/api/src/common/validation",
+    "apps/api/src/common/logging",
+    "apps/api/src/events",
+    "apps/api/test",
+    "apps/worker/src/jobs/emails",
+    "apps/worker/src/jobs/notifications",
+    "apps/worker/src/jobs/kitchen",
+    "infra/docker/postgres",
+    "infra/docker/redis",
+    "infra/docker/api",
+    "infra/docker/client",
+    "docs"
+)
+
+foreach ($dir in $directories) {
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    # create a dummy keep file to preserve empty directories in git just in case
+    New-Item -ItemType File -Force -Path "$dir/.keep" | Out-Null
+}
+
+Write-Host "Scaffold directories created successfully!"
