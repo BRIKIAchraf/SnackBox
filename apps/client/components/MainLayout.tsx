@@ -1,5 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { io } from "socket.io-client";
+import { motion, AnimatePresence } from "framer-motion";
+import { Footer } from "./Footer";
 import { API_BASE, SOCKET_URL } from "../lib/api-config";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
