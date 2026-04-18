@@ -12,7 +12,7 @@ export default function AdminZonesPage() {
 
     const fetchZones = async () => {
         try {
-            const { data } = await axios.get("http://localhost:3002/api/v1/delivery-zones");
+            const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/delivery-zones");
             setZones(data);
         } catch (e) {
             console.error(e);
@@ -26,7 +26,7 @@ export default function AdminZonesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.post("http://localhost:3002/api/v1/delivery-zones", {
+            await axios.post("https://api-production-48c5.up.railway.app/api/v1/delivery-zones", {
                 name: formData.name,
                 fee: parseFloat(formData.fee),
                 minOrder: parseFloat(formData.minOrder),
@@ -41,7 +41,7 @@ export default function AdminZonesPage() {
 
     const toggleZone = async (id: string, current: boolean) => {
         try {
-            await axios.patch(`http://localhost:3002/api/v1/delivery-zones/${id}`, { isActive: !current });
+            await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/delivery-zones/${id}`, { isActive: !current });
             fetchZones();
         } catch (e) { console.error(e); }
     };
@@ -92,7 +92,7 @@ export default function AdminZonesPage() {
                         <button 
                             onClick={async () => {
                                 if(confirm("Delete zone?")) {
-                                    await axios.delete(`http://localhost:3002/api/v1/delivery-zones/${zone.id}`);
+                                    await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/delivery-zones/${zone.id}`);
                                     fetchZones();
                                 }
                             }}

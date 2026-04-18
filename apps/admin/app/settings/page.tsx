@@ -11,7 +11,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3002/api/v1/settings");
+      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/settings");
       setSettings(data);
     } catch (e) {
       console.error(e);
@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.patch("http://localhost:3002/api/v1/settings", settings);
+      await axios.patch("https://api-production-48c5.up.railway.app/api/v1/settings", settings);
       alert("Settings saved successfully!");
     } catch (e) { console.error(e); }
   };

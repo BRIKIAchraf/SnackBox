@@ -22,7 +22,7 @@ export default function Dashboard() {
         return;
       }
 
-      const { data } = await axios.get("http://localhost:3002/api/v1/orders/stats", {
+      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/orders/stats", {
         headers: { Authorization: `Bearer ${token}` }
       });
       

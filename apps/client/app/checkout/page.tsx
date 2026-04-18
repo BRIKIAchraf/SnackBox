@@ -26,7 +26,7 @@ export default function CheckoutPage() {
     const router = useRouter();
 
     useEffect(() => {
-        axios.get("http://localhost:3002/api/v1/delivery-zones").then(res => {
+        axios.get("https://api-production-48c5.up.railway.app/api/v1/delivery-zones").then(res => {
             setDeliveryZones(res.data.filter((z: any) => z.isActive));
         }).catch(err => console.error("Error fetching zones", err));
     }, []);
@@ -34,7 +34,7 @@ export default function CheckoutPage() {
     // Strict validation on mount & when items change
     useEffect(() => {
         if (items.length > 0) {
-            axios.post("http://localhost:3002/api/v1/orders/validate-cart", {
+            axios.post("https://api-production-48c5.up.railway.app/api/v1/orders/validate-cart", {
                 items: items.map(i => ({ 
                     productId: i.id, 
                     price: i.price, 
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
             const token = localStorage.getItem("token");
             
             // 2. Create Order
-            const orderRes = await axios.post("http://localhost:3002/api/v1/orders", {
+            const orderRes = await axios.post("https://api-production-48c5.up.railway.app/api/v1/orders", {
                 items: items.map(i => ({ 
                     productId: i.id, 
                     price: i.price, 
@@ -101,7 +101,7 @@ export default function CheckoutPage() {
                 clearCart();
                 router.push(`/order-confirmation?id=${orderRes.data.id}`);
             } else {
-                const payRes = await axios.post("http://localhost:3002/api/v1/payments/create-session", {
+                const payRes = await axios.post("https://api-production-48c5.up.railway.app/api/v1/payments/create-session", {
                     orderId: orderRes.data.id,
                     successUrl: `${window.location.origin}/order-confirmation?id=${orderRes.data.id}`,
                     cancelUrl: `${window.location.origin}/checkout`

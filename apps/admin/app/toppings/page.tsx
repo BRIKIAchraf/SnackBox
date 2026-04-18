@@ -14,7 +14,7 @@ export default function ToppingsPage() {
   const fetchToppings = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:3002/api/v1/toppings");
+      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/toppings");
       setToppings(data);
     } catch (e) {
       console.error(e);
@@ -31,7 +31,7 @@ export default function ToppingsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:3002/api/v1/toppings", {
+      await axios.post("https://api-production-48c5.up.railway.app/api/v1/toppings", {
         name: formData.name,
         price: parseFloat(formData.price),
         available: true
@@ -47,7 +47,7 @@ export default function ToppingsPage() {
   const toggleAvailability = async (id: string, current: boolean) => {
       try {
           const token = localStorage.getItem("token");
-          await axios.patch(`http://localhost:3002/api/v1/toppings/${id}`, { available: !current }, {
+          await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, { available: !current }, {
             headers: { Authorization: `Bearer ${token}` }
           });
           fetchToppings();
@@ -58,7 +58,7 @@ export default function ToppingsPage() {
       if(!confirm("Supprimer cet ingrédient ?")) return;
       try {
           const token = localStorage.getItem("token");
-          await axios.delete(`http://localhost:3002/api/v1/toppings/${id}`, {
+          await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           fetchToppings();

@@ -26,7 +26,7 @@ export const Navbar = () => {
     
     const token = localStorage.getItem("token");
     if (token) {
-        axios.get("http://localhost:3002/api/v1/auth/me", {
+        axios.get("https://api-production-48c5.up.railway.app/api/v1/auth/me", {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             setUser(res.data);

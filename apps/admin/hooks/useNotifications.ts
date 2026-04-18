@@ -8,7 +8,7 @@ export const useNotifications = () => {
     const [latestOrder, setLatestOrder] = useState<any>(null);
 
     useEffect(() => {
-        const newSocket = io('http://localhost:3002');
+        const newSocket = io('https://api-production-48c5.up.railway.app');
         setSocket(newSocket);
 
         newSocket.on('new_order', (order) => {

@@ -21,7 +21,7 @@ export default function AuthPage() {
         setLoading(true);
         const endpoint = isLogin ? "login" : "register";
         try {
-            const { data } = await axios.post(`http://localhost:3002/api/v1/auth/${endpoint}`, form);
+            const { data } = await axios.post(`https://api-production-48c5.up.railway.app/api/v1/auth/${endpoint}`, form);
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("user", JSON.stringify(data.user));
             router.push("/profile");

@@ -23,7 +23,7 @@ export default function ProfilePage() {
             const token = localStorage.getItem("token");
             try {
                 // In real app: fetch only my orders
-                const { data } = await axios.get("http://localhost:3002/api/v1/orders", {
+                const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/orders", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setOrders(data);

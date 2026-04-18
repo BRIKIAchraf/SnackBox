@@ -64,7 +64,7 @@ export const PizzaCustomizer = ({ isOpen, onClose, pizza, onAddToCart }: PizzaCu
           >
             {/* 1. HERO IMAGE WITH OVERLAY */}
             <div className="relative h-[220px] w-full flex-shrink-0">
-                <img src={pizza.imagePath ? `http://localhost:3002${pizza.imagePath}` : pizza.imageUrl} className="w-full h-full object-cover" alt={pizza.name} />
+                <img src={pizza.imagePath ? `https://api-production-48c5.up.railway.app${pizza.imagePath}` : pizza.imageUrl} className="w-full h-full object-cover" alt={pizza.name} />
                 <div className="absolute inset-0 bg-black/10" />
                 
                 <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white border border-white/10 z-30">

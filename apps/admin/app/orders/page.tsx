@@ -24,7 +24,7 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:3002/api/v1/orders");
+      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/orders");
       setOrders(data);
     } catch (e) {
       console.error(e);
@@ -35,7 +35,7 @@ export default function OrdersPage() {
 
   const updateStatus = async (id: string, status: string) => {
       try {
-          await axios.patch(`http://localhost:3002/api/v1/orders/${id}/status`, { status });
+          await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/orders/${id}/status`, { status });
           fetchOrders();
       } catch (e) { console.error(e); }
   }

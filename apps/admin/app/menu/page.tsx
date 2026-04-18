@@ -23,8 +23,8 @@ export default function MenuPage() {
   const fetchData = async () => {
     try {
       const [pRes, cRes] = await Promise.all([
-        axios.get("http://localhost:3002/api/v1/products"),
-        axios.get("http://localhost:3002/api/v1/categories")
+        axios.get("https://api-production-48c5.up.railway.app/api/v1/products"),
+        axios.get("https://api-production-48c5.up.railway.app/api/v1/categories")
       ]);
       setProducts(pRes.data);
       setCategories(cRes.data);
@@ -54,7 +54,7 @@ export default function MenuPage() {
           data.append("imageUrl", formData.imageUrl);
       }
 
-      await axios.post("http://localhost:3002/api/v1/products", data, {
+      await axios.post("https://api-production-48c5.up.railway.app/api/v1/products", data, {
           headers: { 
               "Content-Type": "multipart/form-data",
               "Authorization": `Bearer ${token}`
@@ -73,7 +73,7 @@ export default function MenuPage() {
 
   const toggleAvailability = async (id: string, current: boolean) => {
     try {
-      await axios.patch(`http://localhost:3002/api/v1/products/${id}/availability`, { available: !current });
+      await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/products/${id}/availability`, { available: !current });
       fetchData();
     } catch (e) { console.error(e); }
   };
@@ -81,7 +81,7 @@ export default function MenuPage() {
   const softDelete = async (id: string) => {
     if (!confirm("Are you sure? This will hide the product from the menu.")) return;
     try {
-      await axios.delete(`http://localhost:3002/api/v1/products/${id}`);
+      await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/products/${id}`);
       fetchData();
     } catch (e) { console.error(e); }
   };
@@ -111,7 +111,7 @@ export default function MenuPage() {
               >
                   <div className="relative h-48 rounded-2xl overflow-hidden mb-6 bg-black border border-white/5">
                     <img 
-                        src={product.imagePath ? `http://localhost:3002${product.imagePath}` : product.imageUrl} 
+                        src={product.imagePath ? `https://api-production-48c5.up.railway.app${product.imagePath}` : product.imageUrl} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={product.name} 
                     />
