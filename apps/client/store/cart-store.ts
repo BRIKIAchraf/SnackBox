@@ -33,6 +33,8 @@ interface CartStore {
   getTotal: () => number;
   errors: string[];
   setErrors: (errors: string[]) => void;
+  orderMode: 'DELIVERY' | 'TAKEAWAY' | 'ONSITE' | null;
+  setOrderMode: (mode: 'DELIVERY' | 'TAKEAWAY' | 'ONSITE' | null) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -41,6 +43,8 @@ export const useCartStore = create<CartStore>()(
       items: [],
       offers: [],
       errors: [],
+      orderMode: null,
+      setOrderMode: (orderMode) => set({ orderMode }),
       setErrors: (errors) => set({ errors }),
       addItem: (item) => {
         const existingItem = get().items.find((i) => i.id === item.id);
@@ -85,7 +89,7 @@ export const useCartStore = create<CartStore>()(
           ),
         });
       },
-      clearCart: () => set({ items: [], offers: [] }),
+      clearCart: () => set({ items: [], offers: [], errors: [] }),
       getTotal: () => {
         const itemsTotal = get().items.reduce((acc, item) => acc + item.price * item.quantity, 0);
         const offersTotal = get().offers.reduce((acc, offer) => acc + offer.price * offer.quantity, 0);

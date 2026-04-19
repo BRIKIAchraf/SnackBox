@@ -108,6 +108,13 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                     <div className="pr-4">
                                         <span className="text-[8px] bg-primary text-white px-2 py-0.5 rounded uppercase font-black tracking-widest mb-1 inline-block">PACK</span>
                                         <h4 className="font-black text-xs uppercase tracking-tight text-primary leading-tight">{offer.name}</h4>
+                                        {offer.customOptions && offer.customOptions.length > 0 && (
+                                            <div className="mt-1 space-y-0.5">
+                                                {offer.customOptions.map((opt: string, i: number) => (
+                                                    <p key={i} className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter leading-none">• {opt}</p>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <button onClick={() => removeOffer(offer.id)} className="text-slate-600 hover:text-red-500 transition-colors">
                                         <Trash2 className="w-4 h-4" />

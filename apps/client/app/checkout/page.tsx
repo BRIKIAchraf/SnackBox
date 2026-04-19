@@ -9,11 +9,21 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
+import { TimeSlotPicker } from "../../components/TimeSlotPicker";
+
+declare global {
+    interface Window {
+        google: any;
+    }
+}
+
 export default function CheckoutPage() {
     const { items, offers, getTotal, clearCart, errors, setErrors } = useCartStore();
     const [loading, setLoading] = useState(false);
     const [deliveryZones, setDeliveryZones] = useState<any[]>([]);
     const [selectedZone, setSelectedZone] = useState<any>(null);
+    const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number } | null>(null);
+    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -25,13 +35,59 @@ export default function CheckoutPage() {
     });
     const router = useRouter();
 
+    // Load Google Maps Script
+    useEffect(() => {
+        const initAutocomplete = () => {
+            const input = document.getElementById("address-input") as HTMLInputElement;
+            if (!input) return;
+            const autocomplete = new window.google.maps.places.Autocomplete(input, {
+                componentRestrictions: { country: "fr" },
+                fields: ["address_components", "geometry"],
+            });
+
+            autocomplete.addListener("place_changed", () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) return;
+
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                setSelectedLocation({ lat, lng });
+
+                let zip = "";
+                let city = "";
+                place.address_components?.forEach((comp: any) => {
+                    if (comp.types.includes("postal_code")) zip = comp.long_name;
+                    if (comp.types.includes("locality")) city = comp.long_name;
+                });
+
+                setFormData(prev => ({ 
+                    ...prev, 
+                    address: input.value, 
+                    zipCode: zip, 
+                    city: city 
+                }));
+            });
+        };
+
+        if (!window.google) {
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+            script.onload = () => initAutocomplete();
+        } else {
+            initAutocomplete();
+        }
+    }, [formData.zipCode]);
+
     useEffect(() => {
         axios.get("https://api-production-48c5.up.railway.app/api/v1/delivery-zones").then(res => {
             setDeliveryZones(res.data.filter((z: any) => z.isActive));
         }).catch(err => console.error("Error fetching zones", err));
     }, []);
 
-    // Strict validation on mount & when items change
+    // Strict validation on mount & when items or location change
     useEffect(() => {
         if (items.length > 0 || offers.length > 0) {
             axios.post("https://api-production-48c5.up.railway.app/api/v1/orders/validate-cart", {
@@ -47,7 +103,11 @@ export default function CheckoutPage() {
                     quantity: o.quantity,
                     name: o.name,
                     customOptions: o.customOptions
-                }))
+                })),
+                deliveryZoneId: selectedZone?.id,
+                lat: selectedLocation?.lat,
+                lng: selectedLocation?.lng,
+                zipCode: formData.zipCode
             }).then(res => {
                 if (!res.data.valid) {
                     setErrors(res.data.corrections);
@@ -56,7 +116,7 @@ export default function CheckoutPage() {
                 }
             }).catch(console.error);
         }
-    }, [items, offers, setErrors]);
+    }, [items, offers, selectedLocation, formData.zipCode, selectedZone, setErrors]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -106,7 +166,12 @@ export default function CheckoutPage() {
                 customerPhone: formData.phone,
                 customerEmail: "",
                 paymentMethod: method,
-                paymentStatus: "PENDING"
+                paymentStatus: "PENDING",
+                lat: selectedLocation?.lat,
+                lng: selectedLocation?.lng,
+                zipCode: formData.zipCode,
+                isASAP: !selectedSlot,
+                scheduledSlot: selectedSlot
             }, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {}
             });
@@ -179,7 +244,7 @@ export default function CheckoutPage() {
                                 <div className="space-y-2">
                                     <h5 className="text-red-500 font-bold uppercase text-xs tracking-widest">Action requise</h5>
                                     <ul className="text-xs text-red-500/80 list-disc list-inside">
-                                        {errors.map((err, idx) => <li key={idx}>{err}</li>)}
+                                        {errors.map((err: string, idx: number) => <li key={idx}>{err}</li>)}
                                     </ul>
                                 </div>
                             </motion.div>
@@ -214,7 +279,17 @@ export default function CheckoutPage() {
                                 <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-slate-400 font-black">2</div>
                                 <h3 className="text-2xl font-black uppercase italic">LIEU DE LIVRAISON</h3>
                             </div>
-                            <input name="address" value={formData.address} onChange={handleInputChange} className="input-field" placeholder="Adresse complète" />
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Saisissez votre adresse complète</label>
+                                <input 
+                                    id="address-input"
+                                    name="address" 
+                                    value={formData.address} 
+                                    onChange={handleInputChange} 
+                                    className="input-field" 
+                                    placeholder="Ex: 15 Rue de Paris, Lyon" 
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <input name="zipCode" value={formData.zipCode} onChange={handleInputChange} className="input-field" placeholder="Code Postal" />
                                 <input name="city" value={formData.city} onChange={handleInputChange} className="input-field" placeholder="Ville" />

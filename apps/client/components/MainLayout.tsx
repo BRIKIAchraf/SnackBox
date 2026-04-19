@@ -1,18 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "./Footer";
-import { API_BASE, SOCKET_URL } from "../lib/api-config";
+import { SOCKET_URL } from "../lib/api-config";
+import { ToastContainer, ToastType } from "./Toast";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const router = useRouter();
+    const [toasts, setToasts] = useState<any[]>([]);
+
+    const addToast = useCallback((message: string, type: ToastType = "info") => {
+        const id = Math.random().toString(36).substr(2, 9);
+        setToasts(prev => [...prev, { id, message, type }]);
+    }, []);
+
+    const removeToast = useCallback((id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    }, []);
 
     useEffect(() => {
-        let socket: ReturnType<typeof io> | null = null;
+        let socket: any = null;
         try {
             socket = io(SOCKET_URL, {
                 reconnectionAttempts: 3,
@@ -23,33 +34,35 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 console.log("Connected to Real-time Sync");
             });
 
-            socket.on("connect_error", () => {
-                // Backend offline - silent fail, no console spam
-                socket?.disconnect();
+            socket.on("menu_updated", () => {
+                addToast("Le menu a été mis à jour !", "info");
+                setTimeout(() => window.location.reload(), 2000);
             });
-
-            const handleUpdate = () => {
-                console.log("Sync signal received - Refreshing UI...");
-                // Force a full location reload to reset all local states and axios fetches
-                window.location.reload();
-            };
-
-            socket.on("menu_updated", handleUpdate);
-            socket.on("categories_updated", handleUpdate);
-            socket.on("zones_updated", handleUpdate);
             
-            socket.on("order_status_updated", (data) => {
-                console.log("Order status update:", data);
-                router.refresh(); // Order updates can stay soft
+            socket.on("order_status_updated", (data: any) => {
+                const statusMessages: Record<string, string> = {
+                    'CONFIRMED': 'Votre commande est confirmée !',
+                    'IN_PREPARATION': 'Votre commande est en préparation 👨‍🍳',
+                    'READY': 'Votre commande est prête ! 🍕',
+                    'DELIVERING': 'Votre commande est en chemin ! 🛵',
+                    'COMPLETED': 'Commande livrée. Bon appétit !',
+                    'CANCELLED': 'Votre commande a été annulée.'
+                };
+                
+                if (statusMessages[data.status]) {
+                    addToast(statusMessages[data.status], data.status === 'CANCELLED' ? "error" : "order");
+                    new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3').play().catch(() => {});
+                }
+                router.refresh();
             });
         } catch (e) {
-            // Ignore connection errors
+            console.error("Socket connection failed", e);
         }
 
         return () => {
             socket?.disconnect();
         };
-    }, [router]);
+    }, [router, addToast]);
 
     return (
         <AnimatePresence mode="wait">
@@ -62,6 +75,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             >
                 {children}
                 <Footer />
+                <ToastContainer toasts={toasts} removeToast={removeToast} />
             </motion.div>
         </AnimatePresence>
     );

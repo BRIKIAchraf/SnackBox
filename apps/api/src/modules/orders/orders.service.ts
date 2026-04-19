@@ -1,12 +1,18 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { DeliveryZonesService } from '../delivery-zones/delivery-zones.service';
+import { SchedulingService } from '../scheduling/scheduling.service';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsGateway: NotificationsGateway
+    private readonly notificationsGateway: NotificationsGateway,
+    private readonly deliveryZonesService: DeliveryZonesService,
+    private readonly schedulingService: SchedulingService,
+    private readonly paymentsService: PaymentsService
   ) {}
 
   async findAll(userId?: string) {
@@ -48,7 +54,7 @@ export class OrdersService {
     return true;
   }
 
-  async validateCart(items: any[] = [], offers: any[] = [], deliveryZoneId?: string) {
+  async validateCart(items: any[] = [], offers: any[] = [], deliveryZoneId?: string, lat?: number, lng?: number, zipCode?: string) {
     const corrections = [];
     let updatedTotal = 0;
     const validatedItems = [];
@@ -133,15 +139,25 @@ export class OrdersService {
     }
 
     let deliveryFee = 0;
-    if (deliveryZoneId) {
+    
+    // Geographical Validation
+    if (lat && lng) {
+        const validatedZone = await this.deliveryZonesService.validateLocation(lat, lng, zipCode);
+        if (!validatedZone) {
+            corrections.push("Désolé, cette adresse n'est pas dans notre zone de livraison.");
+        } else {
+            deliveryFee = validatedZone.fee;
+        }
+    } else if (deliveryZoneId) {
         const zone = await this.prisma.deliveryZone.findUnique({ where: { id: deliveryZoneId } });
         if (zone && zone.isActive) {
             deliveryFee = zone.fee;
-            updatedTotal += deliveryFee;
         } else {
             corrections.push("Zone de livraison inactive.");
         }
     }
+    
+    updatedTotal += deliveryFee;
 
     return {
       valid: corrections.length === 0,
@@ -154,10 +170,25 @@ export class OrdersService {
   }
 
   async create(data: any) {
-    const validation = await this.validateCart(data.items || [], data.offers || [], data.deliveryZoneId);
+    const validation = await this.validateCart(
+        data.items || [], 
+        data.offers || [], 
+        data.deliveryZoneId,
+        data.lat,
+        data.lng,
+        data.zipCode
+    );
     
     if (!validation.valid) {
       throw new BadRequestException({ message: "Cart error", corrections: validation.corrections });
+    }
+
+    // Scheduling Validation
+    if (!data.isASAP && data.scheduledSlot) {
+        const availableSlots = await this.schedulingService.getAvailableSlots();
+        if (!availableSlots.includes(data.scheduledSlot)) {
+            throw new BadRequestException({ message: "Ce créneau n'est plus disponible." });
+        }
     }
 
     const order = await this.prisma.order.create({
@@ -170,8 +201,12 @@ export class OrdersService {
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
+        isASAP: data.isASAP ?? true,
+        scheduledSlot: data.scheduledSlot,
+        scheduledDate: data.scheduledSlot ? new Date() : null, // Assuming current date for now
         address: data.addressId ? { connect: { id: data.addressId } } : undefined,
         user: data.userId ? { connect: { id: data.userId } } : undefined,
+        userType: data.userId ? 'REGISTERED' : 'GUEST',
         deliveryZone: data.deliveryZoneId ? { connect: { id: data.deliveryZoneId } } : undefined,
         items: {
           create: validation.validatedItems.map((item: any) => ({
@@ -197,7 +232,7 @@ export class OrdersService {
                 options: offer.options
             }))
         }
-      },
+      } as any,
       include: { items: { include: { toppings: true } }, offers: true }
     });
 
@@ -216,6 +251,18 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, status: string, adminUserId?: string) {
+    const currentOrder = await this.prisma.order.findUnique({ where: { id } });
+    if (!currentOrder) throw new BadRequestException("Commande introuvable.");
+
+    // Handle Payment Capture/Canceled if it was authorized
+    if ((currentOrder as any).paymentIntentId) {
+        if (status === 'CONFIRMED' && currentOrder.status === 'PENDING_ADMIN_VALIDATION') {
+            await this.paymentsService.capturePayment((currentOrder as any).paymentIntentId);
+        } else if (status === 'CANCELLED') {
+            await this.paymentsService.cancelPayment((currentOrder as any).paymentIntentId);
+        }
+    }
+
     const order = await this.prisma.order.update({
       where: { id },
       data: { status }

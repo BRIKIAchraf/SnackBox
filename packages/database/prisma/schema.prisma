@@ -16,13 +16,27 @@ model User {
   lastName  String?
   isDeleted Boolean   @default(false)
   phone     String?
-  role      String    @default("CLIENT")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  addresses Address[]
-  cart        Cart?
-  preferences Preferences?
-  orders      Order[]
+  role             String    @default("CLIENT")
+  stripeCustomerId String?
+  activeZoneId     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  addresses        Address[]
+  cart             Cart?
+  preferences      Preferences?
+  orders           Order[]
+  notifications    Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, ORDER_UPDATE, PROMO
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Preferences {
@@ -62,7 +76,8 @@ model Product {
   available   Boolean     @default(true)
   isDeleted   Boolean     @default(false)
   imageUrl    String?     // Keeping for backward compatibility
-  imagePath   String?     // New: path to local file in api/uploads
+  imagePath   String?     // Keeping for backward compatibility
+  images      String[]    @default([]) // New: array of Cloudinary image URLs
   cartItems   CartItem[]
   orderItems  OrderItem[]
   category    Category    @relation(fields: [categoryId], references: [id])
@@ -72,6 +87,7 @@ model Topping {
   id               String             @id @default(uuid())
   name             String
   price            Float
+  imageUrl         String?
   available        Boolean            @default(true)
   orderItemToppings OrderItemTopping[]
 }
@@ -79,16 +95,24 @@ model Topping {
 model Order {
   id             String        @id @default(uuid())
   userId         String?
+  userType       String        @default("GUEST") // GUEST, REGISTERED
   total          Float
   deliveryFee    Float         @default(0)
-  status         String        @default("DRAFT") // DRAFT, PENDING_PAYMENT, PAID, IN_PREPARATION, READY, DELIVERING, COMPLETED, CANCELLED
+  status         String        @default("DRAFT") // DRAFT, PENDING_PAYMENT, PAID, PENDING_ADMIN_VALIDATION, CONFIRMED, IN_PREPARATION, READY, DELIVERING, COMPLETED, CANCELLED
   paymentStatus  String        @default("PENDING")
   paymentMethod  String        @default("CASH")
+  paymentIntentId String?
   addressId      String?
   customerName   String?
   customerEmail  String?
   customerPhone  String?
   deliveryZoneId String?
+  
+  // Time Slot Management
+  isASAP         Boolean       @default(true)
+  scheduledSlot  String?       // "14:30"
+  scheduledDate  DateTime?     // Specific day for pre-orders
+  
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   address        Address?      @relation(fields: [addressId], references: [id])
@@ -120,6 +144,7 @@ model Offer {
   isDeleted   Boolean     @default(false)
   imagePath   String?
   imageUrl    String?     // Keeping for backward compatibility
+  images      String[]    @default([]) // Array of Cloudinary image URLs
   orderItems  OrderOfferItem[]
 }
 
@@ -175,6 +200,14 @@ model DeliveryZone {
   minOrder      Float
   estimatedTime Int
   isActive      Boolean @default(true)
+
+  type          String  @default("RADIUS") // RADIUS, ZIP_CODES, POLYGON
+  radius        Float?  // in km
+  centerLat     Float?
+  centerLng     Float?
+  zipCodes      String? // comma separated list
+  polygon       String? // JSON string of coordinates: [{"lat": 1, "lng": 2}, ...]
+
   orders        Order[]
 }
 
@@ -207,10 +240,20 @@ model Settings {
   id              String   @id @default("global")
   restaurantName  String   @default("PIZZA HUB PREMIUM")
   contactEmail    String   @default("manager@pizzahub.com")
+  restaurantAddress String  @default("15 Rue de la Paix, Paris")
+  lat             Float    @default(48.8698)
+  lng             Float    @default(2.3305)
+  
+  // Capacity & Timing
   minOrderValue   Float    @default(12.0)
   deliveryFee     Float    @default(0.0)
-  preparationTime Int      @default(20)
-  deliveryTime    Int      @default(30)
+  preparationTime Int      @default(20) // base prep time in minutes
+  deliveryTime    Int      @default(30) // base delivery time in minutes
+  maxOrdersPerSlot Int     @default(5)  // max orders every 30 mins
+  
+  // Opening Hours (JSON string: {"mon": "11:00-23:00", ...})
+  openingHours    String   @default("{\"mon\":\"11:00-23:00\",\"tue\":\"11:00-23:00\",\"wed\":\"11:00-23:00\",\"thu\":\"11:00-23:00\",\"fri\":\"11:00-00:00\",\"sat\":\"11:00-00:00\",\"sun\":\"11:00-23:00\"}")
+  
   isOpen          Boolean  @default(true)
   updatedAt       DateTime @updatedAt
 }

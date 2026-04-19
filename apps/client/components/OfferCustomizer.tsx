@@ -8,26 +8,21 @@ interface OfferCustomizerProps {
   isOpen: boolean;
   onClose: () => void;
   offer: any;
+  products: any[];
+  categories: any[];
   onAddOfferToCart: (customizedOffer: any) => void;
 }
 
-const DRINKS = [
-    { id: 'coca', name: 'Coca Cola 33cl', price: 0 },
-    { id: 'fanta', name: 'Fanta Orange 33cl', price: 0 },
-    { id: 'sprite', name: 'Sprite 33cl', price: 0 },
-    { id: 'oasis', name: 'Oasis Tropical 33cl', price: 0},
-    { id: 'redbull', name: 'RedBull', price: 2.50} // Premium drink adds cost
-];
-
-const EXTRAS = [
-    { id: 'cheddar', name: 'Sauce Fromagère Supplémentaire', price: 1.00 },
-    { id: 'meat', name: 'Double Viande', price: 2.50 },
-    { id: 'fries', name: 'Grande Portion de Frites', price: 1.50 }
-];
-
-export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: OfferCustomizerProps) => {
+export const OfferCustomizer = ({ isOpen, onClose, offer, products, categories, onAddOfferToCart }: OfferCustomizerProps) => {
   const [selectedDrinks, setSelectedDrinks] = useState<string[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+
+  // Find category IDs
+  const drinkCategory = categories.find(c => c.name.toLowerCase().includes('boisson'));
+  const extraCategory = categories.find(c => c.name.toLowerCase().includes('supplément') || c.name.toLowerCase().includes('extra') || c.name.toLowerCase().includes('ingrédient'));
+
+  const availableDrinks = products.filter(p => p.categoryId === drinkCategory?.id && p.available);
+  const availableExtras = products.filter(p => p.categoryId === extraCategory?.id && p.available);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,21 +37,25 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
   let extraPrice = 0;
   
   selectedDrinks.forEach(did => {
-      const d = DRINKS.find(x => x.id === did);
-      if (d) extraPrice += d.price;
+      const d = availableDrinks.find(x => x.id === did);
+      if (d) {
+          // If the offer description mentions "Boisson Incluse", first drink might be free? 
+          // For now, if price > 0 we add it. Admin can set price to 0 for standard drinks.
+          extraPrice += parseFloat(d.price);
+      }
   });
   
   selectedExtras.forEach(eid => {
-      const e = EXTRAS.find(x => x.id === eid);
-      if (e) extraPrice += e.price;
+      const e = availableExtras.find(x => x.id === eid);
+      if (e) extraPrice += parseFloat(e.price);
   });
 
-  const totalPrice = offer.price + extraPrice;
+  const totalPrice = parseFloat(offer.price) + extraPrice;
 
   const handleConfirm = () => {
       const optionsStr = [
-          ...selectedDrinks.map(did => `Boisson: ${DRINKS.find(d => d.id === did)?.name}`),
-          ...selectedExtras.map(eid => `Extra: ${EXTRAS.find(e => e.id === eid)?.name}`)
+          ...selectedDrinks.map(did => `Boisson: ${availableDrinks.find(d => d.id === did)?.name}`),
+          ...selectedExtras.map(eid => `Extra: ${availableExtras.find(e => e.id === eid)?.name}`)
       ];
 
       onAddOfferToCart({
@@ -65,7 +64,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
           name: offer.name,
           price: totalPrice,
           quantity: 1,
-          imageUrl: offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl,
+          imageUrl: offer.images && offer.images.length > 0 ? offer.images[0] : (offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl),
           customOptions: optionsStr
       });
       onClose();
@@ -95,7 +94,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
           >
             {/* 1. HERO IMAGE WITH OVERLAY */}
             <div className="relative h-[220px] w-full flex-shrink-0">
-                <img src={offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl} className="w-full h-full object-cover" alt={offer.name} />
+                <img src={offer.images && offer.images.length > 0 ? offer.images[0] : (offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl)} className="w-full h-full object-cover" alt={offer.name} />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] to-black/10" />
                 
                 <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white border border-white/10 z-30">
@@ -121,7 +120,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {DRINKS.map(drink => (
+                        {availableDrinks.map(drink => (
                             <button 
                                 key={drink.id}
                                 onClick={() => toggleDrink(drink.id)}
@@ -129,7 +128,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
                             >
                                 <span className="block text-xs font-black text-white uppercase pr-6">{drink.name}</span>
                                 <span className="text-[10px] font-bold text-slate-400 mt-1 block">
-                                    {drink.price === 0 ? 'Inclus' : `+€${drink.price.toFixed(2)}`}
+                                    {parseFloat(drink.price) === 0 ? 'Inclus' : `+€${parseFloat(drink.price).toFixed(2)}`}
                                 </span>
                                 {selectedDrinks.includes(drink.id) && (
                                     <div className="absolute top-4 right-4 w-5 h-5 bg-primary rounded-full flex items-center justify-center text-black">
@@ -150,7 +149,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        {EXTRAS.map(extra => (
+                        {availableExtras.map(extra => (
                             <button 
                                 key={extra.id}
                                 onClick={() => toggleExtra(extra.id)}
@@ -158,7 +157,7 @@ export const OfferCustomizer = ({ isOpen, onClose, offer, onAddOfferToCart }: Of
                             >
                                 <div>
                                     <span className="block text-xs font-black text-white uppercase">{extra.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 mt-1 block">+€{extra.price.toFixed(2)}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 mt-1 block">+€{parseFloat(extra.price).toFixed(2)}</span>
                                 </div>
                                 {selectedExtras.includes(extra.id) && <Check className="w-5 h-5 text-primary" />}
                             </button>

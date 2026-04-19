@@ -7,21 +7,28 @@ export class PaymentStateService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async handlePaymentAuthorized(orderId: string, paymentIntentId: string) {
+    this.logger.log(`Handling payment authorized for order: ${orderId}`);
+    
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: 'AUTHORIZED',
+        status: 'PENDING_ADMIN_VALIDATION',
+        paymentIntentId,
+      } as any,
+    });
+  }
+
   async handlePaymentSuccess(orderId: string) {
     this.logger.log(`Handling payment success for order: ${orderId}`);
     
-    return this.prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({ where: { id: orderId } });
-      
-      if (!order) throw new Error('Order not found');
-      
-      return tx.order.update({
+    return this.prisma.order.update({
         where: { id: orderId },
         data: {
           paymentStatus: 'PAID',
           status: 'CONFIRMED',
         },
-      });
     });
   }
 
@@ -32,6 +39,19 @@ export class PaymentStateService {
       where: { id: orderId },
       data: {
         paymentStatus: 'FAILED',
+        status: 'CANCELLED',
+      },
+    });
+  }
+
+  async handlePaymentCancelled(orderId: string) {
+    this.logger.log(`Handling payment cancelled for order: ${orderId}`);
+    
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: 'CANCELLED',
+        status: 'CANCELLED',
       },
     });
   }

@@ -8,6 +8,7 @@
     "build:api": "npm run build --workspace=api",
     "build:client": "npm run build --workspace=client",
     "build:admin": "npm run build --workspace=admin",
+    "push:db": "npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss",
     "start:api": "npm run start:prod --workspace=api",
     "start:api": "npm run start:prod --workspace=api"
   },

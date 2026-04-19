@@ -10,12 +10,15 @@ import { Logo } from '../../components/Logo';
 import { PizzaCard } from '../../components/PizzaCard';
 import { PizzaCustomizer } from '../../components/PizzaCustomizer';
 import { OfferCustomizer } from '../../components/OfferCustomizer';
+import { OrderModeModal } from '../../components/OrderModeModal';
+import { StoreClosedModal } from '../../components/StoreClosedModal';
 import { API_BASE } from '../../lib/api-config';
 
 export default function MenuPage() {
     const [categories, setCategories] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [offers, setOffers] = useState<any[]>([]);
+    const [toppings, setToppings] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const [loading, setLoading] = useState(true);
     
@@ -24,20 +27,39 @@ export default function MenuPage() {
     
     const [selectedOffer, setSelectedOffer] = useState<any>(null);
     const [isOfferCustomizing, setIsOfferCustomizing] = useState(false);
+    const [isModeSelecting, setIsModeSelecting] = useState(false);
+    const [isStoreClosedModal, setIsStoreClosedModal] = useState(false);
+    const [settings, setSettings] = useState<any>(null);
 
     const addItem = useCartStore((state: any) => state.addItem);
     const addOffer = useCartStore((state: any) => state.addOffer);
+    const orderMode = useCartStore((state: any) => state.orderMode);
+    const setOrderMode = useCartStore((state: any) => state.setOrderMode);
+
+    useEffect(() => {
+        if (!orderMode) {
+            setIsModeSelecting(true);
+        }
+    }, [orderMode]);
 
     const fetchData = async () => {
         try {
-            const [catRes, prodRes, offRes] = await Promise.all([
+            const [catRes, prodRes, offRes, topRes, setRes] = await Promise.all([
                 axios.get(`${API_BASE}/categories`),
                 axios.get(`${API_BASE}/products`),
-                axios.get(`${API_BASE}/offers`)
+                axios.get(`${API_BASE}/offers`),
+                axios.get(`${API_BASE}/products/toppings`),
+                axios.get(`${API_BASE}/settings`)
             ]);
             setCategories(catRes.data);
             setProducts(prodRes.data);
             setOffers(offRes.data.filter((o: any) => o.available));
+            setToppings(topRes.data);
+            setSettings(setRes.data);
+            
+            if (setRes.data && !setRes.data.isOpen) {
+                setIsStoreClosedModal(true);
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -115,7 +137,7 @@ export default function MenuPage() {
                                         }}
                                         className="relative group cursor-pointer h-64 rounded-3xl overflow-hidden border border-white/10 hover:border-primary/50 shadow-2xl shadow-primary/5 transition-all"
                                     >
-                                        <img src={offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={offer.name} />
+                                        <img src={offer.images && offer.images.length > 0 ? offer.images[0] : (offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl)} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={offer.name} />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                                         <div className="absolute top-4 right-4 bg-primary text-black font-black px-4 py-1.5 rounded-full text-xs shadow-lg uppercase tracking-widest">
                                             PACK
@@ -185,6 +207,7 @@ export default function MenuPage() {
                 isOpen={isCustomizing}
                 onClose={() => setIsCustomizing(false)}
                 pizza={selectedPizza}
+                toppings={toppings}
                 onAddToCart={(customized) => {
                     addItem({
                         ...customized,
@@ -198,8 +221,26 @@ export default function MenuPage() {
                 isOpen={isOfferCustomizing}
                 onClose={() => setIsOfferCustomizing(false)}
                 offer={selectedOffer}
+                products={products}
+                categories={categories}
                 onAddOfferToCart={(customized) => {
                     addOffer(customized);
+                }}
+            />
+
+            <OrderModeModal 
+                isOpen={isModeSelecting}
+                onSelect={(mode) => {
+                    setOrderMode(mode);
+                    setIsModeSelecting(false);
+                }}
+            />
+
+            <StoreClosedModal 
+                isOpen={isStoreClosedModal}
+                onSelectSlot={(slot) => {
+                    // We could store this in the cart store as well
+                    setIsStoreClosedModal(false);
                 }}
             />
         </main>

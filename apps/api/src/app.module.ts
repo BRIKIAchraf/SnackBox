@@ -22,6 +22,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     AuditLogsModule,
     PaymentsModule,
     OffersModule,
+    SchedulingModule,
   ],
   controllers: [AppController],
   providers: [

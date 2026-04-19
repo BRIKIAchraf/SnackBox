@@ -24,4 +24,9 @@ export class DeliveryZonesController {
   remove(@Param('id') id: string) {
     return this.zonesService.remove(id);
   }
+
+  @Post('validate')
+  validate(@Body() body: { lat: number; lng: number; zipCode?: string }) {
+    return this.zonesService.validateLocation(body.lat, body.lng, body.zipCode);
+  }
 }

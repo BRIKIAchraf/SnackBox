@@ -1,13 +1,21 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, Request, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { OffersService } from './offers.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-@Controller('offers')
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'offers',
+    allowed_formats: ['jpg', 'png', 'webp', 'jpeg'],
+    transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto', fetch_format: 'auto' }]
+  } as any,
+});
+
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 
@@ -24,20 +32,14 @@ export class OffersController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @UseInterceptors(FileInterceptor('image', {
-    storage: diskStorage({
-      destination: './uploads/products', // Reuse products folder for pack images
-      filename: (req, file, cb) => {
-        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        return cb(null, `${randomName}${extname(file.originalname)}`);
-      }
-    })
-  }))
-  create(@Body() body: any, @UploadedFile() file: Express.Multer.File, @Request() req: any) {
+  @UseInterceptors(FilesInterceptor('images', 5, { storage, limits: { fileSize: 5 * 1024 * 1024 } }))
+  create(@Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
+    const images = files ? files.map(file => file.path) : [];
+
     const data = {
         ...body,
         price: parseFloat(body.price),
-        imagePath: file ? `/uploads/products/${file.filename}` : null
+        images: images.length > 0 ? images : undefined
     };
     return this.offersService.create(data, req.user.userId);
   }
@@ -52,20 +54,14 @@ export class OffersController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @UseInterceptors(FileInterceptor('image', {
-    storage: diskStorage({
-      destination: './uploads/products',
-      filename: (req, file, cb) => {
-        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        return cb(null, `${randomName}${extname(file.originalname)}`);
-      }
-    })
-  }))
-  update(@Param('id') id: string, @Body() body: any, @UploadedFile() file: Express.Multer.File, @Request() req: any) {
+  @UseInterceptors(FilesInterceptor('images', 5, { storage, limits: { fileSize: 5 * 1024 * 1024 } }))
+  update(@Param('id') id: string, @Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
+    const images = files ? files.map(file => file.path) : [];
+
     const data = {
         ...body,
         price: body.price ? parseFloat(body.price) : undefined,
-        imagePath: file ? `/uploads/products/${file.filename}` : undefined
+        images: images.length > 0 ? images : undefined
     };
     return this.offersService.update(id, data, req.user.userId);
   }

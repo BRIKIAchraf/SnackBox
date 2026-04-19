@@ -20,6 +20,9 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [userTypeFilter, setUserTypeFilter] = useState<'ALL' | 'REGISTERED' | 'GUEST'>('ALL');
+  const [converting, setConverting] = useState(false);
+  const [convertEmail, setConvertEmail] = useState("");
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -40,9 +43,34 @@ export default function OrdersPage() {
       } catch (e) { console.error(e); }
   }
 
+  const convertGuest = async () => {
+    if (!selectedOrder || !convertEmail) return;
+    setConverting(true);
+    try {
+        const token = localStorage.getItem("admin_token");
+        await axios.post(
+            `https://api-production-48c5.up.railway.app/api/v1/users/convert-guest`, 
+            { orderId: selectedOrder.id, email: convertEmail, phone: selectedOrder.customerPhone },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        alert("Compte créé avec succès ! Le mot de passe a été généré.");
+        setSelectedOrder(null);
+        fetchOrders();
+    } catch (e: any) {
+        alert(e.response?.data?.message || "Erreur lors de la conversion");
+    } finally {
+        setConverting(false);
+        setConvertEmail("");
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const filteredOrders = orders.filter(o => 
+      userTypeFilter === 'ALL' || o.userType === userTypeFilter
+  );
 
   return (
     <div className="space-y-8">
@@ -56,7 +84,7 @@ export default function OrdersPage() {
         </button>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
           <div className="flex-grow relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input 
@@ -64,6 +92,11 @@ export default function OrdersPage() {
                   placeholder="Rechercher par ID ou client..." 
                   className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-6 focus:outline-none focus:border-primary/50 transition-colors font-bold text-sm" 
               />
+          </div>
+          <div className="flex bg-white/5 border border-white/5 rounded-2xl p-1">
+              <button onClick={() => setUserTypeFilter('ALL')} className={`px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${userTypeFilter === 'ALL' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}>Tous</button>
+              <button onClick={() => setUserTypeFilter('REGISTERED')} className={`px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${userTypeFilter === 'REGISTERED' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}>Inscrits</button>
+              <button onClick={() => setUserTypeFilter('GUEST')} className={`px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${userTypeFilter === 'GUEST' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}>Invités</button>
           </div>
       </div>
 
@@ -79,11 +112,11 @@ export default function OrdersPage() {
                   </tr>
               </thead>
               <tbody>
-                  {orders.length === 0 ? (
+                  {filteredOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-20 text-slate-500 font-bold italic">Aucune commande trouvée. La boutique est calme !</td>
+                        <td colSpan={5} className="text-center py-20 text-slate-500 font-bold italic">Aucune commande trouvée pour ce filtre.</td>
                       </tr>
-                  ) : orders.map((order) => (
+                  ) : filteredOrders.map((order) => (
                     <motion.tr 
                         key={order.id}
                         initial={{ opacity: 0 }}
@@ -157,10 +190,34 @@ export default function OrdersPage() {
                                 <section className="space-y-4">
                                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                         <User className="w-3 h-3" /> Infos Client
+                                        <span className={`px-2 py-0.5 rounded text-[8px] ${selectedOrder.userType === 'REGISTERED' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                            {selectedOrder.userType === 'REGISTERED' ? 'COMPTE' : 'INVITÉ'}
+                                        </span>
                                     </h4>
-                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-1">
-                                        <p className="font-black text-sm">{selectedOrder.customerName}</p>
-                                        <p className="text-xs font-bold text-slate-400 flex items-center gap-2"><Phone className="w-3 h-3" /> {selectedOrder.customerPhone || "N/A"}</p>
+                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                                        <div>
+                                            <p className="font-black text-sm">{selectedOrder.customerName}</p>
+                                            <p className="text-xs font-bold text-slate-400 flex items-center gap-2 mt-1"><Phone className="w-3 h-3" /> {selectedOrder.customerPhone || "N/A"}</p>
+                                        </div>
+                                        {selectedOrder.userType === 'GUEST' && (
+                                            <div className="pt-3 border-t border-white/10 space-y-2">
+                                                <p className="text-[10px] font-bold text-primary uppercase">Convertir en client inscrit</p>
+                                                <input 
+                                                    type="email"
+                                                    placeholder="Email pour le compte"
+                                                    value={convertEmail}
+                                                    onChange={e => setConvertEmail(e.target.value)}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-xl p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-primary/50"
+                                                />
+                                                <button 
+                                                    onClick={convertGuest} 
+                                                    disabled={converting || !convertEmail}
+                                                    className="w-full bg-primary/20 hover:bg-primary text-primary hover:text-white transition-all rounded-xl p-2 text-[10px] font-black uppercase disabled:opacity-50"
+                                                >
+                                                    {converting ? "Conversion..." : "Créer un compte"}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
 

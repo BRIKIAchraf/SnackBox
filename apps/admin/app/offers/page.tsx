@@ -19,7 +19,7 @@ export default function OffersPage() {
     price: "",
     imageUrl: "" 
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const fetchData = async () => {
     try {
@@ -39,7 +39,7 @@ export default function OffersPage() {
   const openAddModal = () => {
     setEditingOffer(null);
     setFormData({ name: "", description: "", price: "", imageUrl: "" });
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setIsModalOpen(true);
   };
 
@@ -51,7 +51,7 @@ export default function OffersPage() {
         price: offer.price,
         imageUrl: offer.imageUrl || ""
     });
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setIsModalOpen(true);
   };
 
@@ -64,8 +64,10 @@ export default function OffersPage() {
       data.append("description", formData.description);
       data.append("price", formData.price.toString());
       
-      if (selectedFile) {
-          data.append("image", selectedFile);
+      if (selectedFiles.length > 0) {
+          selectedFiles.forEach(file => {
+              data.append("images", file);
+          });
       } else if (formData.imageUrl) {
           data.append("imageUrl", formData.imageUrl);
       }
@@ -135,10 +137,15 @@ export default function OffersPage() {
               >
                   <div className="relative h-48 rounded-2xl overflow-hidden mb-6 bg-black border border-white/5">
                     <img 
-                        src={offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl} 
+                        src={offer.images && offer.images.length > 0 ? offer.images[0] : (offer.imagePath ? `https://api-production-48c5.up.railway.app${offer.imagePath}` : offer.imageUrl)} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={offer.name} 
                     />
+                    {offer.images && offer.images.length > 1 && (
+                        <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-black text-white border border-white/20">
+                            +{offer.images.length - 1} images
+                        </div>
+                    )}
                     <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
                         <div className="px-3 py-1 bg-gradient-to-r from-primary to-orange-400 backdrop-blur-md rounded-lg text-[10px] font-black uppercase text-white shadow-xl">
                             PACK SPÉCIAL
@@ -233,14 +240,23 @@ export default function OffersPage() {
                             />
                         </div>
                         <div className="space-y-2 col-span-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Image du Pack</label>
-                            <div className="flex flex-col md:flex-row gap-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Image du Pack (Plusieurs autorisées)</label>
+                            <div className="flex flex-col gap-4">
                                 <input 
                                     type="file"
-                                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                                    multiple
+                                    accept="image/*"
+                                    onChange={e => {
+                                        if (e.target.files) {
+                                            setSelectedFiles(Array.from(e.target.files));
+                                        }
+                                    }}
                                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary/50 text-xs font-bold"
                                 />
-                                <div className="flex items-center justify-center text-slate-700 uppercase text-[10px] font-black py-2">OU LIEN</div>
+                                {selectedFiles.length > 0 && (
+                                    <p className="text-[10px] text-primary">{selectedFiles.length} fichiers sélectionnés</p>
+                                )}
+                                <div className="flex items-center text-slate-700 uppercase text-[10px] font-black">OU LIEN (Rétro-compatibilité)</div>
                                 <input 
                                     value={formData.imageUrl}
                                     onChange={e => setFormData({...formData, imageUrl: e.target.value})}
@@ -249,6 +265,25 @@ export default function OffersPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Live Image Preview */}
+                        {(selectedFiles.length > 0 || formData.imageUrl) && (
+                            <div className="space-y-2 col-span-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Aperçu</label>
+                                <div className="flex gap-3 flex-wrap">
+                                    {selectedFiles.length > 0 ? selectedFiles.map((file, i) => (
+                                        <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-primary/30">
+                                            <img src={URL.createObjectURL(file)} alt={`preview-${i}`} className="w-full h-full object-cover" />
+                                            <div className="absolute bottom-1 right-1 bg-black/60 text-[8px] text-white px-1 rounded">{i + 1}</div>
+                                        </div>
+                                    )) : formData.imageUrl ? (
+                                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-white/10">
+                                            <img src={formData.imageUrl} alt="preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Description (Ce qui est inclus)</label>

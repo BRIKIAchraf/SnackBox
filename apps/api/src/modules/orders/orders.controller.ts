@@ -41,7 +41,14 @@ export class OrdersController {
 
   @Post('validate-cart')
   validateCart(@Body() data: any) {
-    return this.ordersService.validateCart(data.items, data.deliveryZoneId);
+    return this.ordersService.validateCart(
+      data.items, 
+      data.offers, 
+      data.deliveryZoneId, 
+      data.lat, 
+      data.lng, 
+      data.zipCode
+    );
   }
 
   @Patch(':id/status')

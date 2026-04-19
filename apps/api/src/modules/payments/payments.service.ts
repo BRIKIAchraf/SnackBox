@@ -17,7 +17,7 @@ export class PaymentsService {
   async createCheckoutSession(orderId: string, successUrl: string, cancelUrl: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true },
+      include: { items: true, offers: true },
     });
 
     if (!order) throw new Error('Order not found');
@@ -33,6 +33,21 @@ export class PaymentsService {
       quantity: item.quantity,
     }));
 
+    // Add Offers (Packs)
+    order.offers.forEach((offer) => {
+        lineItems.push({
+            price_data: {
+                currency: 'eur',
+                product_data: {
+                    name: `Pack: ${offer.name}`,
+                    description: offer.options ? JSON.parse(offer.options).join(', ') : ''
+                } as any,
+                unit_amount: Math.round(offer.price * 100),
+            },
+            quantity: offer.quantity,
+        });
+    });
+
     // Add delivery fee as a line item if applicable
     const deliveryZone = await this.prisma.deliveryZone.findUnique({
         where: { id: order.deliveryZoneId || '' }
@@ -43,7 +58,7 @@ export class PaymentsService {
             price_data: {
                 currency: 'eur',
                 product_data: {
-                    name: `Livraison (${deliveryZone.name})`,
+                    name: `Frais de livraison (${deliveryZone.name})`,
                 },
                 unit_amount: Math.round(deliveryZone.fee * 100),
             },
@@ -55,15 +70,41 @@ export class PaymentsService {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      payment_intent_data: {
+        capture_method: 'manual',
+        metadata: {
+          orderId: order.id,
+        },
+      },
+      success_url: `${successUrl}`,
       cancel_url: cancelUrl,
       metadata: {
         orderId: order.id,
       },
-    }, {
-      idempotencyKey: `${order.id}-payment-intent`
     });
 
     return { url: session.url };
+  }
+
+  async capturePayment(paymentIntentId: string) {
+    try {
+        const intent = await this.stripe.paymentIntents.capture(paymentIntentId);
+        this.logger.log(`Payment captured: ${intent.id}`);
+        return intent;
+    } catch (e) {
+        this.logger.error(`Failed to capture payment: ${e.message}`);
+        throw e;
+    }
+  }
+
+  async cancelPayment(paymentIntentId: string) {
+    try {
+        const intent = await this.stripe.paymentIntents.cancel(paymentIntentId);
+        this.logger.log(`Payment cancelled/voided: ${intent.id}`);
+        return intent;
+    } catch (e) {
+        this.logger.error(`Failed to cancel payment: ${e.message}`);
+        throw e;
+    }
   }
 }
