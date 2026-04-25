@@ -84,11 +84,13 @@ export class PaymentsService {
           orderId: order.id,
         },
       },
-      success_url: `${successUrl}`,
+      success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
         orderId: order.id,
       },
+    }, {
+      idempotencyKey: `checkout_${order.id}`
     });
 
     return { url: session.url };

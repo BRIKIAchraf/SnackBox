@@ -192,59 +192,64 @@ export class OrdersService {
         }
     }
 
-    const order = await this.prisma.order.create({
-      data: {
-        total: validation.updatedTotal,
-        deliveryFee: validation.deliveryFee,
-        status: OrderStatus.PENDING_PAYMENT,
-        paymentStatus: (data.paymentStatus as PaymentStatus) || PaymentStatus.PENDING,
-        paymentMethod: data.paymentMethod || 'CASH',
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        isASAP: data.isASAP ?? true,
-        scheduledSlot: data.scheduledSlot,
-        scheduledDate: data.scheduledSlot ? new Date() : null, // Assuming current date for now
-        address: data.addressId ? { connect: { id: data.addressId } } : undefined,
-        user: data.userId ? { connect: { id: data.userId } } : undefined,
-        userType: data.userId ? 'REGISTERED' : 'GUEST',
-        deliveryZone: data.deliveryZoneId ? { connect: { id: data.deliveryZoneId } } : undefined,
-        items: {
-          create: validation.validatedItems.map((item: any) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name,
-            toppings: {
-              create: item.actualToppings.map((t: any) => ({
-                toppingId: t.id,
-                name: t.name,
-                price: t.price
-              }))
-            }
-          }))
-        },
-        offers: {
-            create: validation.validatedOffers.map((offer: any) => ({
-                offerId: offer.offerId,
-                quantity: offer.quantity,
-                price: offer.price,
-                name: offer.name,
-                options: offer.options
-            }))
-        }
-      } as any,
-      include: { items: { include: { toppings: true } }, offers: true }
-    });
+    // Execute everything in a single transaction
+    const order = await this.prisma.$transaction(async (tx) => {
+        const newOrder = await tx.order.create({
+            data: {
+                total: validation.updatedTotal,
+                deliveryFee: validation.deliveryFee,
+                status: OrderStatus.PENDING_PAYMENT,
+                paymentStatus: (data.paymentStatus as PaymentStatus) || PaymentStatus.PENDING,
+                paymentMethod: data.paymentMethod || 'CASH',
+                customerName: data.customerName,
+                customerEmail: data.customerEmail,
+                customerPhone: data.customerPhone,
+                isASAP: data.isASAP ?? true,
+                scheduledSlot: data.scheduledSlot,
+                scheduledDate: data.scheduledSlot ? new Date() : null,
+                address: data.addressId ? { connect: { id: data.addressId } } : undefined,
+                user: data.userId ? { connect: { id: data.userId } } : undefined,
+                userType: data.userId ? 'REGISTERED' : 'GUEST',
+                deliveryZone: data.deliveryZoneId ? { connect: { id: data.deliveryZoneId } } : undefined,
+                items: {
+                    create: validation.validatedItems.map((item: any) => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        price: item.price,
+                        name: item.name,
+                        toppings: {
+                            create: item.actualToppings.map((t: any) => ({
+                                toppingId: t.id,
+                                name: t.name,
+                                price: t.price
+                            }))
+                        }
+                    }))
+                },
+                offers: {
+                    create: validation.validatedOffers.map((offer: any) => ({
+                        offerId: offer.offerId,
+                        quantity: offer.quantity,
+                        price: offer.price,
+                        name: offer.name,
+                        options: offer.options
+                    }))
+                }
+            } as any,
+            include: { items: { include: { toppings: true } }, offers: true }
+        });
 
-    await this.prisma.auditLog.create({
-        data: {
-            action: 'CREATE_ORDER',
-            entity: 'ORDER',
-            entityId: order.id,
-            userId: data.userId,
-            details: JSON.stringify({ total: order.total })
-        }
+        await tx.auditLog.create({
+            data: {
+                action: 'CREATE_ORDER',
+                entity: 'ORDER',
+                entityId: newOrder.id,
+                userId: data.userId,
+                details: JSON.stringify({ total: newOrder.total })
+            }
+        });
+
+        return newOrder;
     });
 
     this.notificationsGateway.notifyNewOrder(order);
@@ -254,6 +259,13 @@ export class OrdersService {
   async updateStatus(id: string, status: OrderStatus, adminUserId?: string) {
     const currentOrder = await this.prisma.order.findUnique({ where: { id } });
     if (!currentOrder) throw new BadRequestException("Commande introuvable.");
+
+    // Prevent updating orders that are in a final state
+    if (currentOrder.status === OrderStatus.COMPLETED || currentOrder.status === OrderStatus.CANCELLED) {
+        if (status !== currentOrder.status) { // Allow re-sending the same status (idempotency)
+            throw new BadRequestException(`Impossible de modifier une commande déjà ${currentOrder.status.toLowerCase()}.`);
+        }
+    }
 
     // Handle Payment Capture/Canceled if it was authorized
     if (currentOrder.paymentIntentId) {
