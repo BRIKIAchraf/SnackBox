@@ -104,7 +104,7 @@ async function main() {
         description: 'Sauce tomate, mozzarella fior di latte, basilic frais, huile d\'olive.',
         price: 11.0,
         categoryId: catPizzas.id,
-        imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -112,7 +112,7 @@ async function main() {
         description: 'Sauce tomate, mozzarella, jambon, champignons frais.',
         price: 13.5,
         categoryId: catPizzas.id,
-        imageUrl: 'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=1935&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=1935&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -120,7 +120,7 @@ async function main() {
         description: 'Galette XL, frites, sauce fromagère maison, 1 viande au choix.',
         price: 8.5,
         categoryId: catTacos.id,
-        imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1981&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1981&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -128,7 +128,7 @@ async function main() {
         description: 'Galette XXL, frites, sauce fromagère maison, 2 viandes.',
         price: 11.5,
         categoryId: catTacos.id,
-        imageUrl: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?q=80&w=2071&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?q=80&w=2071&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -136,7 +136,7 @@ async function main() {
         description: 'Pain brioché, steak haché 150g, cheddar affiné, salade, tomate, sauce secrète.',
         price: 9.5,
         categoryId: catBurgers.id,
-        imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -144,7 +144,7 @@ async function main() {
         description: 'Canette bien fraîche.',
         price: 2.5,
         categoryId: catDrinks.id,
-        imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1954&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1954&auto=format&fit=crop'],
         available: true,
       },
       {
@@ -152,7 +152,7 @@ async function main() {
         description: 'Véritable tiramisu italien au café et mascarpone.',
         price: 4.5,
         categoryId: catDesserts.id,
-        imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=1936&auto=format&fit=crop',
+        images: ['https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=1936&auto=format&fit=crop'],
         available: true,
       }
     ]
