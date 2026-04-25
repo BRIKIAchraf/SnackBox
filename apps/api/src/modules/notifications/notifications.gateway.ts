@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: true,
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://snack-box-client.vercel.app', 'https://snack-box-admin.vercel.app'],
     credentials: true,
     methods: ['GET', 'POST'],
   },
