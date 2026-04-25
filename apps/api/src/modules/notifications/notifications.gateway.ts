@@ -23,18 +23,34 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
+  @SubscribeMessage('join_order')
+  handleJoinOrder(client: Socket, orderId: string) {
+    client.join(`order_${orderId}`);
+    this.logger.log(`Client ${client.id} joined room: order_${orderId}`);
+  }
+
+  @SubscribeMessage('join_user')
+  handleJoinUser(client: Socket, userId: string) {
+    client.join(`user_${userId}`);
+    this.logger.log(`Client ${client.id} joined room: user_${userId}`);
+  }
+
   notifyNewOrder(order: any) {
-    this.logger.log(`Broadcasting new order: ${order.id}`);
-    this.server.emit('new_order', order);
+    this.logger.log(`Broadcasting new order to admins: ${order.id}`);
+    this.server.to('admins').emit('new_order', order);
   }
 
   notifyStatusUpdate(orderId: string, status: string) {
-    this.server.emit('order_status_updated', { orderId, status });
+    this.logger.log(`Notifying status update for order ${orderId}: ${status}`);
+    this.server.to(`order_${orderId}`).emit('order_status_updated', { orderId, status });
+    // Also notify admins
+    this.server.to('admins').emit('order_status_updated', { orderId, status });
   }
 
   notifyMenuUpdate() {
     this.server.emit('menu_updated');
   }
+
 
   notifyCategoryUpdate() {
     this.server.emit('categories_updated');

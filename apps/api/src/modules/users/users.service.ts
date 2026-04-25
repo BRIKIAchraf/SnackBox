@@ -34,6 +34,15 @@ export class UsersService {
     });
   }
 
+  async update(id: string, data: any) {
+    // If updating password, it should be hashed (though usually done in a separate route)
+    const { password, ...updateData } = data;
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
   async create(data: any) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     return this.prisma.user.create({
@@ -95,3 +104,4 @@ export class UsersService {
     return { user: newUser, tempPassword: randomPassword };
   }
 }
+

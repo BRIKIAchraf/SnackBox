@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Delete, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, UseGuards, Delete, Param, Post, Body, Patch, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -20,6 +20,12 @@ export class UsersController {
   @Roles('ADMIN')
   remove(@Param('id') id: string) {
     return this.usersService.softDelete(id);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@Request() req: any, @Body() data: any) {
+    return this.usersService.update(req.user.userId, data);
   }
 
   @Post('convert-guest')

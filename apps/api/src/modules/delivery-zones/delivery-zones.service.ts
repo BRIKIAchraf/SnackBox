@@ -3,7 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { CreateDeliveryZoneDto } from './dto/create-delivery-zone.dto';
 import { UpdateDeliveryZoneDto } from './dto/update-delivery-zone.dto';
-import { DeliveryZoneType } from '@prisma/client';
+import { DeliveryZoneType, OrderStatus, PaymentStatus } from '@prisma/client'; // Re-indexed
+ // Re-indexed
 
 @Injectable()
 export class DeliveryZonesService {
@@ -130,4 +131,5 @@ export class DeliveryZonesService {
     return isInside;
   }
 }
+
 

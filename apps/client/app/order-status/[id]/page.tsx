@@ -34,13 +34,22 @@ export default function OrderStatusPage() {
 
         fetchOrder();
 
-        socket.on('orderStatusUpdated', (data: any) => {
+        // Join the specific room for this order to receive targeted updates
+        socket.emit('join_order', id);
+
+        // Safety Polling Fallback (every 30s)
+        const pollInterval = setInterval(fetchOrder, 30000);
+
+        socket.on('order_status_updated', (data: any) => {
             if (data.orderId === id) {
                 setOrder((prev: any) => ({ ...prev, status: data.status }));
             }
         });
 
-        return () => { socket.off('orderStatusUpdated'); };
+        return () => { 
+            socket.off('order_status_updated'); 
+            clearInterval(pollInterval);
+        };
     }, [id]);
 
     if (loading) return <div className="p-40 text-center font-black animate-pulse text-primary uppercase tracking-widest text-3xl italic">Localisation de votre Boîte...</div>;

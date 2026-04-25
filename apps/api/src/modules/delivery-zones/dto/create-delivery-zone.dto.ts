@@ -41,3 +41,4 @@ export class CreateDeliveryZoneDto {
   @IsString()
   polygon?: string;
 }
+
