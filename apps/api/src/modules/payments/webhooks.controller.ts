@@ -9,7 +9,8 @@ export class WebhooksController {
   private readonly logger = new Logger(WebhooksController.name);
 
   constructor(private readonly paymentState: PaymentStateService) {
-      this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummyKeyToAvoidCrashOnStartup';
+      this.stripe = new Stripe(stripeKey, {
           apiVersion: '2025-01-27' as any,
       });
   }
