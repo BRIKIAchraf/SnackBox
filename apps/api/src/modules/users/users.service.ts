@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -39,7 +40,7 @@ export class UsersService {
       data: {
         ...data,
         password: hashedPassword,
-        role: data.role || 'CLIENT',
+        role: data.role || UserRole.CLIENT,
       },
     });
   }
@@ -64,7 +65,7 @@ export class UsersService {
             firstName,
             lastName,
             phone: phone || order.customerPhone,
-            role: 'CLIENT'
+            role: UserRole.CLIENT
         }
     });
 

@@ -16,6 +16,7 @@ const storage = new CloudinaryStorage({
   } as any,
 });
 
+@Controller('offers')
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 

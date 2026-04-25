@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
 import { DeliveryZonesService } from './delivery-zones.service';
+import { CreateDeliveryZoneDto } from './dto/create-delivery-zone.dto';
+import { UpdateDeliveryZoneDto } from './dto/update-delivery-zone.dto';
 
 @Controller('delivery-zones')
 export class DeliveryZonesController {
@@ -11,12 +13,12 @@ export class DeliveryZonesController {
   }
 
   @Post()
-  create(@Body() data: any) {
+  create(@Body() data: CreateDeliveryZoneDto) {
     return this.zonesService.create(data);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: UpdateDeliveryZoneDto) {
     return this.zonesService.update(id, data);
   }
 

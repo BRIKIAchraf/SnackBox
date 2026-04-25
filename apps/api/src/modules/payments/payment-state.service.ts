@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class PaymentStateService {
@@ -13,10 +14,10 @@ export class PaymentStateService {
     return this.prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: 'AUTHORIZED',
-        status: 'PENDING_ADMIN_VALIDATION',
+        paymentStatus: PaymentStatus.AUTHORIZED,
+        status: OrderStatus.PENDING_ADMIN_VALIDATION,
         paymentIntentId,
-      } as any,
+      },
     });
   }
 
@@ -26,8 +27,8 @@ export class PaymentStateService {
     return this.prisma.order.update({
         where: { id: orderId },
         data: {
-          paymentStatus: 'PAID',
-          status: 'CONFIRMED',
+          paymentStatus: PaymentStatus.PAID,
+          status: OrderStatus.CONFIRMED,
         },
     });
   }
@@ -38,8 +39,8 @@ export class PaymentStateService {
     return this.prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: 'FAILED',
-        status: 'CANCELLED',
+        paymentStatus: PaymentStatus.FAILED,
+        status: OrderStatus.CANCELLED,
       },
     });
   }
@@ -50,9 +51,10 @@ export class PaymentStateService {
     return this.prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: 'CANCELLED',
-        status: 'CANCELLED',
+        paymentStatus: PaymentStatus.CANCELLED,
+        status: OrderStatus.CANCELLED,
       },
     });
   }
 }
+

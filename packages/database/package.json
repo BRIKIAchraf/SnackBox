@@ -1,7 +1,8 @@
 {
   "name": "@pizza-platform/database",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "@prisma/client": "5.22.0",
     "@types/bcrypt": "^6.0.0",
@@ -13,6 +14,7 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
+    "build": "tsc",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed"

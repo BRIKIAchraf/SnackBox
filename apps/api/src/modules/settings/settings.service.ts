@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @Injectable()
 export class SettingsService {
+  private readonly logger = new Logger(SettingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsGateway: NotificationsGateway
@@ -17,12 +20,18 @@ export class SettingsService {
     });
   }
 
-  async updateSettings(data: any) {
-    const settings = await this.prisma.settings.update({
-      where: { id: 'global' },
-      data,
-    });
-    this.notificationsGateway.notifyMenuUpdate(); // Use menu_updated as a generic refresh trigger
-    return settings;
+  async updateSettings(data: UpdateSettingsDto) {
+    try {
+      const settings = await this.prisma.settings.update({
+        where: { id: 'global' },
+        data,
+      });
+      this.notificationsGateway.notifyMenuUpdate();
+      return settings;
+    } catch (error) {
+      this.logger.error(`Error updating settings: ${error.message}`);
+      throw new BadRequestException('Could not update settings');
+    }
   }
 }
+

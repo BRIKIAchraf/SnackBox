@@ -3,6 +3,7 @@ import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { OrderStatus, UserRole } from '@prisma/client';
 
 @Controller('orders')
 export class OrdersController {
@@ -18,7 +19,7 @@ export class OrdersController {
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(@Request() req: any) {
-    const userId = req.user.role === 'ADMIN' ? undefined : req.user.userId;
+    const userId = req.user.role === UserRole.ADMIN ? undefined : req.user.userId;
     return this.ordersService.findAll(userId);
   }
 
@@ -27,7 +28,7 @@ export class OrdersController {
   async findOne(@Param('id') id: string, @Request() req: any) {
     const order = await this.ordersService.findOne(id);
     if (!order) return null;
-    if (req.user.role !== 'ADMIN' && order.userId !== req.user.userId) {
+    if (req.user.role !== UserRole.ADMIN && order.userId !== req.user.userId) {
         throw new UnauthorizedException('You do not have access to this order');
     }
     return order;
@@ -52,7 +53,8 @@ export class OrdersController {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body('status') status: string, @Body('adminUserId') adminUserId: string) {
+  updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus, @Body('adminUserId') adminUserId: string) {
     return this.ordersService.updateStatus(id, status, adminUserId);
   }
 }
+

@@ -8,19 +8,56 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  CLIENT
+  ADMIN
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAID
+  PENDING_ADMIN_VALIDATION
+  CONFIRMED
+  IN_PREPARATION
+  READY
+  DELIVERING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  AUTHORIZED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+  CASH_ON_DELIVERY
+}
+
+enum DeliveryZoneType {
+  RADIUS
+  ZIP_CODES
+  POLYGON
+}
+
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  firstName String?
-  lastName  String?
-  isDeleted Boolean   @default(false)
-  phone     String?
-  role             String    @default("CLIENT")
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String
+  firstName        String?
+  lastName         String?
+  isDeleted        Boolean        @default(false)
+  phone            String?
+  role             UserRole       @default(CLIENT)
   stripeCustomerId String?
   activeZoneId     String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   addresses        Address[]
   cart             Cart?
   preferences      Preferences?
@@ -40,12 +77,12 @@ model Notification {
 }
 
 model Preferences {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  pizzaFavorites  String?  // Could be JSON array string
-  smsNotifs       Boolean  @default(false)
-  emailNotifs     Boolean  @default(true)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  pizzaFavorites String? // Could be JSON array string
+  smsNotifs      Boolean  @default(false)
+  emailNotifs    Boolean  @default(true)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Address {
@@ -75,52 +112,50 @@ model Product {
   categoryId  String
   available   Boolean     @default(true)
   isDeleted   Boolean     @default(false)
-  imageUrl    String?     // Keeping for backward compatibility
-  imagePath   String?     // Keeping for backward compatibility
-  images      String[]    @default([]) // New: array of Cloudinary image URLs
+  images      String[]    @default([]) // Array of Cloudinary image URLs
   cartItems   CartItem[]
   orderItems  OrderItem[]
   category    Category    @relation(fields: [categoryId], references: [id])
 }
 
 model Topping {
-  id               String             @id @default(uuid())
-  name             String
-  price            Float
-  imageUrl         String?
-  available        Boolean            @default(true)
+  id                String             @id @default(uuid())
+  name              String
+  price             Float
+  imageUrl          String?
+  available         Boolean            @default(true)
   orderItemToppings OrderItemTopping[]
 }
 
 model Order {
-  id             String        @id @default(uuid())
-  userId         String?
-  userType       String        @default("GUEST") // GUEST, REGISTERED
-  total          Float
-  deliveryFee    Float         @default(0)
-  status         String        @default("DRAFT") // DRAFT, PENDING_PAYMENT, PAID, PENDING_ADMIN_VALIDATION, CONFIRMED, IN_PREPARATION, READY, DELIVERING, COMPLETED, CANCELLED
-  paymentStatus  String        @default("PENDING")
-  paymentMethod  String        @default("CASH")
+  id              String         @id @default(uuid())
+  userId          String?
+  userType        String         @default("GUEST") // GUEST, REGISTERED
+  total           Float
+  deliveryFee     Float          @default(0)
+  status          OrderStatus    @default(DRAFT)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  paymentMethod   String         @default("CASH")
   paymentIntentId String?
-  addressId      String?
-  customerName   String?
-  customerEmail  String?
-  customerPhone  String?
-  deliveryZoneId String?
-  
+  addressId       String?
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  deliveryZoneId  String?
+
   // Time Slot Management
-  isASAP         Boolean       @default(true)
-  scheduledSlot  String?       // "14:30"
-  scheduledDate  DateTime?     // Specific day for pre-orders
-  
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  address        Address?      @relation(fields: [addressId], references: [id])
-  deliveryZone   DeliveryZone? @relation(fields: [deliveryZoneId], references: [id])
-  user           User?         @relation(fields: [userId], references: [id])
-  items          OrderItem[]
-  offers         OrderOfferItem[]
-  payment        Payment?
+  isASAP        Boolean   @default(true)
+  scheduledSlot String? // "14:30"
+  scheduledDate DateTime? // Specific day for pre-orders
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  address      Address?        @relation(fields: [addressId], references: [id])
+  deliveryZone DeliveryZone?   @relation(fields: [deliveryZoneId], references: [id])
+  user         User?           @relation(fields: [userId], references: [id])
+  items        OrderItem[]
+  offers       OrderOfferItem[]
+  payment      Payment?
 }
 
 model OrderItem {
@@ -136,28 +171,26 @@ model OrderItem {
 }
 
 model Offer {
-  id          String      @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
   description String?
   price       Float
-  available   Boolean     @default(true)
-  isDeleted   Boolean     @default(false)
-  imagePath   String?
-  imageUrl    String?     // Keeping for backward compatibility
-  images      String[]    @default([]) // Array of Cloudinary image URLs
+  available   Boolean          @default(true)
+  isDeleted   Boolean          @default(false)
+  images      String[]         @default([]) // Array of Cloudinary image URLs
   orderItems  OrderOfferItem[]
 }
 
 model OrderOfferItem {
-  id        String             @id @default(uuid())
-  orderId   String
-  offerId   String
-  quantity  Int
-  price     Float // Snapshot of pack price including variations
-  name      String // Snapshot of pack name
-  options   String? // JSON storing the user's custom pack config (ingredients, drinks)
-  offer     Offer              @relation(fields: [offerId], references: [id])
-  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  orderId  String
+  offerId  String
+  quantity Int
+  price    Float // Snapshot of pack price including variations
+  name     String // Snapshot of pack name
+  options  String? // JSON storing the user's custom pack config (ingredients, drinks)
+  offer    Offer  @relation(fields: [offerId], references: [id])
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItemTopping {
@@ -180,34 +213,30 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
-
 model Payment {
-  id             String   @id @default(uuid())
-  orderId        String   @unique
-  provider       String   @default("STRIPE") // STRIPE, CASH_ON_DELIVERY, etc.
-  transactionId  String?  @unique // Stripe PaymentIntent ID or similar
-  stripeIntentId String?  @unique // Deprecated, use transactionId
+  id             String          @id @default(uuid())
+  orderId        String          @unique
+  provider       PaymentProvider @default(STRIPE)
+  transactionId  String?         @unique // Stripe PaymentIntent ID or similar
   amount         Float
-  status         String   @default("PENDING")
-  createdAt      DateTime @default(now())
-  order          Order    @relation(fields: [orderId], references: [id])
+  status         PaymentStatus   @default(PENDING)
+  createdAt      DateTime        @default(now())
+  order          Order           @relation(fields: [orderId], references: [id])
 }
 
 model DeliveryZone {
-  id            String  @id @default(uuid())
-  name          String  @unique
+  id            String           @id @default(uuid())
+  name          String           @unique
   fee           Float
   minOrder      Float
   estimatedTime Int
-  isActive      Boolean @default(true)
-
-  type          String  @default("RADIUS") // RADIUS, ZIP_CODES, POLYGON
-  radius        Float?  // in km
+  isActive      Boolean          @default(true)
+  type          DeliveryZoneType @default(RADIUS)
+  radius        Float? // in km
   centerLat     Float?
   centerLng     Float?
   zipCodes      String? // comma separated list
   polygon       String? // JSON string of coordinates: [{"lat": 1, "lng": 2}, ...]
-
   orders        Order[]
 }
 

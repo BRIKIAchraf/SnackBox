@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PaymentStatus, PaymentProvider } from '@prisma/client';
 
 @Injectable()
 export class PaymentsService {
@@ -40,7 +41,14 @@ export class PaymentsService {
                 currency: 'eur',
                 product_data: {
                     name: `Pack: ${offer.name}`,
-                    description: offer.options ? JSON.parse(offer.options).join(', ') : ''
+                    description: (() => {
+                        try {
+                            const parsed = offer.options ? JSON.parse(offer.options) : null;
+                            if (Array.isArray(parsed)) return parsed.join(', ');
+                            if (parsed?.selections) return parsed.selections.map((s: any) => s.name).join(', ');
+                            return '';
+                        } catch { return ''; }
+                    })()
                 } as any,
                 unit_amount: Math.round(offer.price * 100),
             },

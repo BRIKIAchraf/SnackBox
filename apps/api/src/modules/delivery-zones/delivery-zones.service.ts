@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { CreateDeliveryZoneDto } from './dto/create-delivery-zone.dto';
+import { UpdateDeliveryZoneDto } from './dto/update-delivery-zone.dto';
+import { DeliveryZoneType } from '@prisma/client';
 
 @Injectable()
 export class DeliveryZonesService {
+  private readonly logger = new Logger(DeliveryZonesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsGateway: NotificationsGateway
@@ -13,25 +18,46 @@ export class DeliveryZonesService {
     return this.prisma.deliveryZone.findMany();
   }
 
-  async create(data: any) {
-    const zone = await this.prisma.deliveryZone.create({ data });
-    this.notificationsGateway.notifyZoneUpdate();
-    return zone;
+  async create(data: CreateDeliveryZoneDto) {
+    try {
+      const zone = await this.prisma.deliveryZone.create({ data });
+      this.notifyUpdate();
+      return zone;
+    } catch (error) {
+      this.logger.error(`Error creating delivery zone: ${error.message}`);
+      throw new BadRequestException('Could not create delivery zone');
+    }
   }
 
-  async update(id: string, data: any) {
-    const zone = await this.prisma.deliveryZone.update({
-      where: { id },
-      data,
-    });
-    this.notificationsGateway.notifyZoneUpdate();
-    return zone;
+  async update(id: string, data: UpdateDeliveryZoneDto) {
+    try {
+      const zone = await this.prisma.deliveryZone.update({
+        where: { id },
+        data,
+      });
+      this.notifyUpdate();
+      return zone;
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Delivery zone with ID ${id} not found`);
+      }
+      this.logger.error(`Error updating delivery zone ${id}: ${error.message}`);
+      throw new BadRequestException('Could not update delivery zone');
+    }
   }
 
   async remove(id: string) {
-    const zone = await this.prisma.deliveryZone.delete({ where: { id } });
-    this.notificationsGateway.notifyZoneUpdate();
-    return zone;
+    try {
+      const zone = await this.prisma.deliveryZone.delete({ where: { id } });
+      this.notifyUpdate();
+      return zone;
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Delivery zone with ID ${id} not found`);
+      }
+      this.logger.error(`Error deleting delivery zone ${id}: ${error.message}`);
+      throw new BadRequestException('Could not delete delivery zone');
+    }
   }
 
   async validateLocation(lat: number, lng: number, zipCode?: string) {
@@ -40,29 +66,37 @@ export class DeliveryZonesService {
     });
 
     for (const zone of zones) {
-      const z = zone as any;
-
-      if (z.type === 'RADIUS' && z.radius && z.centerLat && z.centerLng) {
-        const distance = this.getDistance(lat, lng, z.centerLat, z.centerLng);
-        if (distance <= z.radius) return zone;
+      if (zone.type === DeliveryZoneType.RADIUS && zone.radius && zone.centerLat && zone.centerLng) {
+        const distance = this.getDistance(lat, lng, zone.centerLat, zone.centerLng);
+        if (distance <= zone.radius) return zone;
       }
 
-      if (z.type === 'ZIP_CODES' && z.zipCodes && zipCode) {
-        const allowedZips = z.zipCodes.split(',').map((zip: string) => zip.trim());
+      if (zone.type === DeliveryZoneType.ZIP_CODES && zone.zipCodes && zipCode) {
+        const allowedZips = zone.zipCodes.split(',').map((zip: string) => zip.trim());
         if (allowedZips.includes(zipCode)) return zone;
       }
 
-      if (z.type === 'POLYGON' && z.polygon) {
+      if (zone.type === DeliveryZoneType.POLYGON && zone.polygon) {
         try {
-          const polygonCoords = JSON.parse(z.polygon);
-          if (this.isPointInPolygon({ lat, lng }, polygonCoords)) return zone;
+          const polygonCoords = JSON.parse(zone.polygon);
+          if (Array.isArray(polygonCoords) && this.isPointInPolygon({ lat, lng }, polygonCoords)) {
+            return zone;
+          }
         } catch (e) {
-          console.error("Invalid polygon data for zone", zone.id);
+          this.logger.warn(`Invalid polygon data for zone ${zone.id}`);
         }
       }
     }
 
     return null;
+  }
+
+  private async notifyUpdate() {
+    try {
+      await this.notificationsGateway.notifyZoneUpdate();
+    } catch (error) {
+      this.logger.warn(`Failed to notify zone update: ${error.message}`);
+    }
   }
 
   // Haversine formula for distance in KM
@@ -96,3 +130,4 @@ export class DeliveryZonesService {
     return isInside;
   }
 }
+

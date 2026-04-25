@@ -4,6 +4,7 @@ import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { DeliveryZonesService } from '../delivery-zones/delivery-zones.service';
 import { SchedulingService } from '../scheduling/scheduling.service';
 import { PaymentsService } from '../payments/payments.service';
+import { OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -195,8 +196,8 @@ export class OrdersService {
       data: {
         total: validation.updatedTotal,
         deliveryFee: validation.deliveryFee,
-        status: 'PENDING_PAYMENT',
-        paymentStatus: data.paymentStatus || 'PENDING',
+        status: OrderStatus.PENDING_PAYMENT,
+        paymentStatus: (data.paymentStatus as PaymentStatus) || PaymentStatus.PENDING,
         paymentMethod: data.paymentMethod || 'CASH',
         customerName: data.customerName,
         customerEmail: data.customerEmail,
@@ -250,16 +251,16 @@ export class OrdersService {
     return order;
   }
 
-  async updateStatus(id: string, status: string, adminUserId?: string) {
+  async updateStatus(id: string, status: OrderStatus, adminUserId?: string) {
     const currentOrder = await this.prisma.order.findUnique({ where: { id } });
     if (!currentOrder) throw new BadRequestException("Commande introuvable.");
 
     // Handle Payment Capture/Canceled if it was authorized
-    if ((currentOrder as any).paymentIntentId) {
-        if (status === 'CONFIRMED' && currentOrder.status === 'PENDING_ADMIN_VALIDATION') {
-            await this.paymentsService.capturePayment((currentOrder as any).paymentIntentId);
-        } else if (status === 'CANCELLED') {
-            await this.paymentsService.cancelPayment((currentOrder as any).paymentIntentId);
+    if (currentOrder.paymentIntentId) {
+        if (status === OrderStatus.CONFIRMED && currentOrder.status === OrderStatus.PENDING_ADMIN_VALIDATION) {
+            await this.paymentsService.capturePayment(currentOrder.paymentIntentId);
+        } else if (status === OrderStatus.CANCELLED) {
+            await this.paymentsService.cancelPayment(currentOrder.paymentIntentId);
         }
     }
 
@@ -284,14 +285,14 @@ export class OrdersService {
 
   async getDashboardStats() {
     const orders = await this.prisma.order.findMany({
-        where: { status: { not: 'CANCELLED' } },
+        where: { status: { not: OrderStatus.CANCELLED } },
         include: { items: true }
     });
 
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
     const orderCount = orders.length;
     
-    const uniqueCustomers = await this.prisma.user.count({ where: { role: 'CLIENT' } });
+    const uniqueCustomers = await this.prisma.user.count({ where: { role: UserRole.CLIENT } });
     
     const productSales: Record<string, { id: string, name: string, count: number }> = {};
     orders.forEach(order => {
@@ -311,7 +312,7 @@ export class OrdersService {
         orderCount,
         customerCount: uniqueCustomers,
         bestSeller: topProduct.name,
-        activeOrders: orders.filter(o => ['PENDING', 'PREPARING'].includes(o.status)).length
+        activeOrders: orders.filter(o => (([OrderStatus.PENDING_PAYMENT, OrderStatus.PAID, OrderStatus.CONFIRMED, OrderStatus.IN_PREPARATION, OrderStatus.READY, OrderStatus.DELIVERING] as OrderStatus[]).includes(o.status))).length
     };
   }
 }
