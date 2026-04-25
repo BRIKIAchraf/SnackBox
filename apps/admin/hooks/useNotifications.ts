@@ -12,6 +12,10 @@ export const useNotifications = () => {
             transports: ['websocket'],
             upgrade: false
         });
+        newSocket.on('connect', () => {
+            console.log('Connected to socket');
+            newSocket.emit('join_user', 'admins');
+        });
         setSocket(newSocket);
 
         newSocket.on('new_order', (order) => {
