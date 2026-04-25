@@ -12,11 +12,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
   const allowedOrigins = process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:3000', 'http://localhost:3001'];
+    : [
+        'http://localhost:3000', 
+        'http://localhost:3001', 
+        'https://snack-box-client.vercel.app', 
+        'https://snack-box-admin.vercel.app'
+      ];
 
   logger.log('🚀 Finalizing CORS and API Routes V1.1.3...');
   app.enableCors({
-    origin: true, // Allow all origins to resolve CORS once and for all during deployment
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type,Accept,Authorization',
