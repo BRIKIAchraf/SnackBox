@@ -135,13 +135,13 @@ export default function ProfilePage() {
             </AnimatePresence>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-red-800 rounded-3xl flex items-center justify-center font-black text-2xl shadow-xl border border-white/10">
+                <div className="flex items-center gap-8">
+                    <div className="w-24 h-24 bg-gradient-to-br from-red-600 to-black rounded-[2rem] flex items-center justify-center font-black text-3xl shadow-2xl border border-white/10 rotate-3 transition-transform hover:rotate-0 duration-500">
                         {user.firstName.charAt(0)}
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black italic uppercase tracking-tighter">{user.firstName} {user.lastName}</h1>
-                        <p className="text-slate-400 font-bold">{user.email}</p>
+                        <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white">{user.firstName} <span className="text-red-600">{user.lastName}</span></h1>
+                        <p className="text-slate-500 font-bold tracking-[0.3em] text-[10px] uppercase opacity-50">{user.email}</p>
                     </div>
                 </div>
                 
@@ -154,7 +154,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex flex-wrap gap-2 p-1 bg-[#1A1A1A] rounded-2xl mb-12 w-fit max-w-full">
+            <div className="flex flex-wrap gap-4 p-2 bg-[#0D0D0D] rounded-3xl mb-16 w-fit max-w-full border border-white/5 shadow-2xl">
                 {[
                     { id: "orders", icon: Package, label: "Commandes" },
                     { id: "addresses", icon: MapPin, label: "Adresses" },
@@ -163,8 +163,8 @@ export default function ProfilePage() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                            activeTab === tab.id ? "bg-red-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
+                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-500 ${
+                            activeTab === tab.id ? "bg-red-600 text-white shadow-[0_10px_30px_rgba(220,38,38,0.3)] scale-105" : "text-slate-500 hover:text-white"
                         }`}
                     >
                         <tab.icon className="w-4 h-4" /> {tab.label}
@@ -174,14 +174,15 @@ export default function ProfilePage() {
 
             <section className="min-h-[400px]">
                 {activeTab === "orders" && (
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
                         {orders.length === 0 ? (
-                            <div className="text-center py-20 bg-[#1A1A1A] rounded-3xl border border-dashed border-white/10">
-                                <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                                <p className="text-slate-500 font-bold">Aucune commande trouvée. Un petit creux ?</p>
+                            <div className="text-center py-32 bg-[#0D0D0D] rounded-[3rem] border border-dashed border-white/5">
+                                <Package className="w-16 h-16 text-white/5 mx-auto mb-6" />
+                                <p className="text-slate-600 font-black uppercase tracking-widest text-[10px]">Aucune commande trouvée</p>
                             </div>
                         ) : orders.map((order) => (
-                            <div key={order.id} className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 hover:bg-[#222] transition-all group shadow-xl">
+                            <div key={order.id} className="bg-[#0D0D0D] border border-white/5 rounded-[3rem] p-10 hover:border-red-600/30 transition-all group shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-red-600/20 to-transparent" />
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3">
@@ -192,13 +193,13 @@ export default function ProfilePage() {
                                             </span>
                                             <span className="text-xs text-slate-500 font-bold">#{order.id.slice(0,8).toUpperCase()}</span>
                                         </div>
-                                        <p className="text-lg font-bold">{order.items.length} Produits • {parseFloat(order.total).toFixed(2)}€</p>
-                                        <div className="flex items-center gap-2 text-xs text-slate-400 italic">
-                                            <Clock className="w-3 h-3" /> Commandé le {new Date(order.createdAt).toLocaleDateString()}
+                                        <p className="text-3xl font-black italic tracking-tighter text-white uppercase">{order.items.length} PRODUITS • <span className="text-red-600">{parseFloat(order.total).toFixed(2)}€</span></p>
+                                        <div className="flex items-center gap-3 text-[10px] text-slate-600 font-black uppercase tracking-widest">
+                                            <Clock className="w-4 h-4 text-red-600/50" /> {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
                                         </div>
                                     </div>
-                                    <button className="flex items-center gap-2 px-6 py-4 bg-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/10 group-hover:bg-red-600 group-hover:border-red-600 transition-all">
-                                        Voir Détails <ChevronRight className="w-4 h-4" />
+                                    <button className="flex items-center gap-3 px-8 py-5 bg-white/[0.02] rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-white/5 group-hover:bg-red-600 group-hover:text-white transition-all shadow-xl">
+                                        DÉTAILS <ChevronRight className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -207,47 +208,56 @@ export default function ProfilePage() {
                 )}
 
                 {activeTab === "addresses" && (
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         {/* New Address Form */}
-                        <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 shadow-xl">
-                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2"><Plus className="text-red-500" /> Ajouter une adresse</h3>
-                            <form onSubmit={addAddress} className="space-y-4">
-                                <input 
-                                    type="text" placeholder="Rue" required
-                                    className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 transition-all outline-none"
-                                    value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})}
-                                />
-                                <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-[#0D0D0D] border border-white/5 rounded-[3rem] p-12 shadow-2xl">
+                            <h3 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-widest text-white"><Plus className="text-red-600" /> NOUVELLE ADRESSE</h3>
+                            <form onSubmit={addAddress} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase text-slate-600 ml-4 tracking-[0.3em]">Rue / Résidence</label>
                                     <input 
-                                        type="text" placeholder="Ville" required
-                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
-                                        value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})}
-                                    />
-                                    <input 
-                                        type="text" placeholder="Code Postal" required
-                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
-                                        value={newAddress.zipCode} onChange={e => setNewAddress({...newAddress, zipCode: e.target.value})}
+                                        type="text" required
+                                        className="w-full bg-[#050505] border border-white/5 rounded-2xl p-5 text-sm font-bold focus:border-red-600/50 transition-all outline-none text-white"
+                                        value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})}
                                     />
                                 </div>
-                                <button type="submit" className="w-full py-4 bg-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl">
-                                    Enregistrer l'adresse
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black uppercase text-slate-600 ml-4 tracking-[0.3em]">Ville</label>
+                                        <input 
+                                            type="text" required
+                                            className="w-full bg-[#050505] border border-white/5 rounded-2xl p-5 text-sm font-bold focus:border-red-600/50 outline-none text-white"
+                                            value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black uppercase text-slate-600 ml-4 tracking-[0.3em]">Code Postal</label>
+                                        <input 
+                                            type="text" required
+                                            className="w-full bg-[#050505] border border-white/5 rounded-2xl p-5 text-sm font-bold focus:border-red-600/50 outline-none text-white"
+                                            value={newAddress.zipCode} onChange={e => setNewAddress({...newAddress, zipCode: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full py-5 bg-red-600 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-red-700 transition-all shadow-[0_15px_30px_rgba(220,38,38,0.2)]">
+                                    ENREGISTRER L'ADRESSE
                                 </button>
                             </form>
                         </div>
 
                         {/* Address List */}
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             {addresses.map(addr => (
-                                <div key={addr.id} className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-6 flex items-start justify-between group shadow-lg">
+                                <div key={addr.id} className="bg-[#0D0D0D] border border-white/5 rounded-[2rem] p-10 flex items-start justify-between group shadow-xl">
                                     <div>
-                                        <p className="font-bold">{addr.street}</p>
-                                        <p className="text-sm text-slate-500">{addr.zipCode} {addr.city}</p>
+                                        <p className="font-black uppercase tracking-tight italic text-xl text-white">{addr.street}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 mt-2">{addr.zipCode} {addr.city}</p>
                                     </div>
                                     <button 
                                         onClick={() => deleteAddress(addr.id)}
-                                        className="p-3 bg-red-500/10 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                        className="p-4 bg-red-600/10 text-red-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:text-white shadow-xl"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-5 h-5" />
                                     </button>
                                 </div>
                             ))}
@@ -256,49 +266,49 @@ export default function ProfilePage() {
                 )}
 
                 {activeTab === "profile" && (
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl">
-                        <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-10 shadow-xl">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-2"><User className="text-red-500" /> Modifier mon profil</h3>
-                            <form onSubmit={updateProfile} className="space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Prénom</label>
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-3xl">
+                        <div className="bg-[#0D0D0D] border border-white/5 rounded-[3rem] p-16 shadow-2xl">
+                            <h3 className="text-2xl font-black uppercase italic mb-12 flex items-center gap-4 tracking-widest text-white"><User className="text-red-600 w-6 h-6" /> ÉDITION DU PROFIL</h3>
+                            <form onSubmit={updateProfile} className="space-y-10">
+                                <div className="grid grid-cols-2 gap-10">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-[0.3em]">Prénom</label>
                                         <input 
                                             type="text" required
-                                            className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                            className="w-full bg-[#050505] border border-white/5 rounded-2xl p-6 font-bold focus:border-red-600/50 outline-none text-white transition-all"
                                             value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Nom</label>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-[0.3em]">Nom de famille</label>
                                         <input 
                                             type="text" required
-                                            className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                            className="w-full bg-[#050505] border border-white/5 rounded-2xl p-6 font-bold focus:border-red-600/50 outline-none text-white transition-all"
                                             value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Email</label>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-[0.3em]">Adresse E-mail</label>
                                     <input 
                                         type="email" disabled
-                                        className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-slate-600 cursor-not-allowed"
+                                        className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-6 font-bold text-slate-700 cursor-not-allowed"
                                         value={profileForm.email}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Téléphone</label>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-[0.3em]">Numéro de Téléphone</label>
                                     <input 
                                         type="tel" required
-                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                        className="w-full bg-[#050505] border border-white/5 rounded-2xl p-6 font-bold focus:border-red-600/50 outline-none text-white transition-all"
                                         value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
                                     />
                                 </div>
                                 <button 
                                     disabled={loading}
-                                    className="w-full py-5 bg-red-600 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-2xl flex items-center justify-center gap-3"
+                                    className="w-full py-6 bg-red-600 rounded-2xl font-black text-[12px] uppercase tracking-[0.4em] hover:bg-red-700 transition-all shadow-[0_20px_40px_rgba(220,38,38,0.25)] flex items-center justify-center gap-4"
                                 >
-                                    {loading ? "Mise à jour..." : <><Save className="w-5 h-5" /> Enregistrer les modifications</>}
+                                    {loading ? "TRAITEMENT..." : <><Save className="w-5 h-5" /> SAUVEGARDER LES MODIFICATIONS</>}
                                 </button>
                             </form>
                         </div>
