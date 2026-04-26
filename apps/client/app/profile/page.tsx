@@ -154,7 +154,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-2xl mb-12 w-fit">
+            <div className="flex flex-wrap gap-2 p-1 bg-[#1A1A1A] rounded-2xl mb-12 w-fit max-w-full">
                 {[
                     { id: "orders", icon: Package, label: "Commandes" },
                     { id: "addresses", icon: MapPin, label: "Adresses" },
@@ -176,12 +176,12 @@ export default function ProfilePage() {
                 {activeTab === "orders" && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                         {orders.length === 0 ? (
-                            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                            <div className="text-center py-20 bg-[#1A1A1A] rounded-3xl border border-dashed border-white/10">
                                 <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                                 <p className="text-slate-500 font-bold">Aucune commande trouvée. Un petit creux ?</p>
                             </div>
                         ) : orders.map((order) => (
-                            <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 hover:bg-white/[0.08] transition-all group">
+                            <div key={order.id} className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 hover:bg-[#222] transition-all group shadow-xl">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3">
@@ -209,23 +209,23 @@ export default function ProfilePage() {
                 {activeTab === "addresses" && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* New Address Form */}
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+                        <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 shadow-xl">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2"><Plus className="text-red-500" /> Ajouter une adresse</h3>
                             <form onSubmit={addAddress} className="space-y-4">
                                 <input 
                                     type="text" placeholder="Rue" required
-                                    className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 transition-all outline-none"
+                                    className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 transition-all outline-none"
                                     value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})}
                                 />
                                 <div className="grid grid-cols-2 gap-4">
                                     <input 
                                         type="text" placeholder="Ville" required
-                                        className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
+                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
                                         value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})}
                                     />
                                     <input 
                                         type="text" placeholder="Code Postal" required
-                                        className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
+                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-sm font-bold focus:border-red-500 outline-none"
                                         value={newAddress.zipCode} onChange={e => setNewAddress({...newAddress, zipCode: e.target.value})}
                                     />
                                 </div>
@@ -238,7 +238,7 @@ export default function ProfilePage() {
                         {/* Address List */}
                         <div className="space-y-4">
                             {addresses.map(addr => (
-                                <div key={addr.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-start justify-between group">
+                                <div key={addr.id} className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-6 flex items-start justify-between group shadow-lg">
                                     <div>
                                         <p className="font-bold">{addr.street}</p>
                                         <p className="text-sm text-slate-500">{addr.zipCode} {addr.city}</p>
@@ -257,7 +257,7 @@ export default function ProfilePage() {
 
                 {activeTab === "profile" && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl">
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-10">
+                        <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-10 shadow-xl">
                             <h3 className="text-lg font-bold mb-8 flex items-center gap-2"><User className="text-red-500" /> Modifier mon profil</h3>
                             <form onSubmit={updateProfile} className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                                         <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Prénom</label>
                                         <input 
                                             type="text" required
-                                            className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                            className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
                                             value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
                                         />
                                     </div>
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                                         <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Nom</label>
                                         <input 
                                             type="text" required
-                                            className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                            className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
                                             value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
                                         />
                                     </div>
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                                     <label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Téléphone</label>
                                     <input 
                                         type="tel" required
-                                        className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
+                                        className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 font-bold focus:border-red-500 outline-none"
                                         value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
                                     />
                                 </div>

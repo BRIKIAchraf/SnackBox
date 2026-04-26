@@ -61,7 +61,7 @@ function OrderConfirmationContent() {
 
         {!isPendingPayment && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-               <div className={`glass-card p-6 flex flex-col items-center gap-3 ${order?.status === "PAID" || order?.status === "CONFIRMED" ? 'border-primary' : ''}`}>
+               <div className={`surface-card p-6 flex flex-col items-center gap-3 ${order?.status === "PAID" || order?.status === "CONFIRMED" ? 'border-primary' : ''}`}>
                    <Package className={`w-6 h-6 ${order?.status === "PAID" || order?.status === "CONFIRMED" ? 'text-primary' : 'text-slate-600'}`} />
                    <span className="text-[10px] font-black tracking-[0.2em] uppercase">Confirmée</span>
                </div>

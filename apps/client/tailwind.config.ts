@@ -26,8 +26,8 @@ const config: Config = {
           '@apply relative overflow-hidden bg-[#FF6A00] text-white font-black px-8 py-4 rounded-2xl transition-all duration-300 hover:bg-[#CC5500] active:scale-95 shadow-2xl': {},
           'box-shadow': '0 0 20px rgba(255, 106, 0, 0.3)',
         },
-        '.glass-card': {
-          '@apply bg-[#1A1A1A] backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 transition-all duration-500': {},
+        '.surface-card': {
+          '@apply bg-[#1A1A1A] border border-white/10 rounded-[2.5rem] p-8 transition-all duration-500 shadow-xl': {},
         },
         '.input-field': {
           '@apply w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 outline-none transition-all duration-300 focus:border-[#FF6A00]/40 focus:bg-white/[0.07] font-bold text-white': {},

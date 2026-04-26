@@ -54,7 +54,7 @@ export const PizzaCard = ({ id, name, description, price, imageUrl, imagePath, i
               e.stopPropagation();
               onCustomize?.();
             }}
-            className="w-10 h-10 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/10 hover:bg-primary hover:text-black transition-all"
+            className="w-10 h-10 bg-black/60 rounded-full flex items-center justify-center border border-white/10 hover:bg-primary hover:text-black transition-all"
           >
             <Info className="w-5 h-5" />
           </button>

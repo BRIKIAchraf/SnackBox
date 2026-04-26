@@ -67,7 +67,7 @@ export default function OrderStatusPage() {
                     <h1 className="text-6xl md:text-[8rem] font-black italic uppercase italic tracking-tighter leading-none">OÙ EST MA <br/> <span className="text-primary">BOÎTE ?</span></h1>
                 </div>
 
-                <div className="glass-card !p-12 !rounded-[3rem] relative overflow-hidden bg-white/5 border border-white/10">
+                <div className="surface-card !p-12 !rounded-[3rem] relative overflow-hidden bg-[#1A1A1A] border border-white/10 shadow-2xl">
                     <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
                         <motion.div 
                             initial={{ width: 0 }}
@@ -99,7 +99,7 @@ export default function OrderStatusPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="glass-card !rounded-[2rem] p-10 space-y-6 bg-white/[0.03] border border-white/5">
+                    <div className="surface-card !rounded-[2rem] p-10 space-y-6 bg-[#1A1A1A] border border-white/5 shadow-xl">
                         <div className="flex items-center gap-3">
                             <MapPin className="text-primary w-5 h-5" />
                             <h4 className="font-black uppercase italic tracking-widest text-white">Détails de livraison</h4>
@@ -110,7 +110,7 @@ export default function OrderStatusPage() {
                         </div>
                     </div>
 
-                    <div className="glass-card !rounded-[2rem] p-10 space-y-6 bg-white/[0.03] border border-white/5">
+                    <div className="surface-card !rounded-[2rem] p-10 space-y-6 bg-[#1A1A1A] border border-white/5 shadow-xl">
                         <div className="flex items-center gap-3">
                             <Phone className="text-primary w-5 h-5" />
                             <h4 className="font-black uppercase italic tracking-widest text-white">Besoin d'aide ?</h4>

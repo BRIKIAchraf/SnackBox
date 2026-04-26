@@ -13,8 +13,6 @@
   --primary-hover: #CC5500;
   --glow-accent: rgba(255, 106, 0, 0.2);
   
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 body {

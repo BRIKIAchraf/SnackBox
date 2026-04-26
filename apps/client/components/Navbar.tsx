@@ -45,7 +45,7 @@ export const Navbar = () => {
   return (
     <>
       <nav className={`fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl transition-all duration-500`}>
-        <div className={`backdrop-blur-2xl border-2 rounded-full px-6 h-16 md:h-20 flex items-center justify-between shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all duration-500 ${scrolled ? 'bg-black border-primary scale-95' : 'bg-black/80 border-white/10'}`}>
+        <div className={`border-2 rounded-full px-6 h-16 md:h-20 flex items-center justify-between shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all duration-500 ${scrolled ? 'bg-black border-primary scale-95' : 'bg-black border-white/10'}`}>
           
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-4 group">
