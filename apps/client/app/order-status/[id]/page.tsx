@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Check, Pizza, ChefHat, Truck, Home, MapPin, Clock, Phone } from "lucide-react";
 import { useParams } from "next/navigation";
 import { socket } from "../../../lib/socket";
+import { API_BASE } from "../../../lib/api-config";
 
 export default function OrderStatusPage() {
     const { id } = useParams();
@@ -26,7 +27,7 @@ export default function OrderStatusPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const { data } = await axios.get(`https://api-production-48c5.up.railway.app/api/v1/orders/${id}`);
+                const { data } = await axios.get(`${API_BASE}/orders/${id}`);
                 setOrder(data);
             } catch (err) { console.error(err); }
             finally { setLoading(false); }

@@ -2,7 +2,7 @@
  * Resolves the best image URL for a product or offer.
  * Priority: Cloudinary images[] array → legacy imagePath → legacy imageUrl → fallback
  */
-const API_URL = "https://api-production-48c5.up.railway.app";
+import { API_URL } from "./api-config";
 
 export function getImageUrl(item: {
   images?: string[];

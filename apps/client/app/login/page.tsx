@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, ChevronRight, User, Phone, ArrowLeft, Pizza } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { API_BASE } from "../../lib/api-config";
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -21,7 +22,7 @@ export default function AuthPage() {
         setLoading(true);
         const endpoint = isLogin ? "login" : "register";
         try {
-            const { data } = await axios.post(`https://api-production-48c5.up.railway.app/api/v1/auth/${endpoint}`, form);
+            const { data } = await axios.post(`${API_BASE}/auth/${endpoint}`, form);
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("user", JSON.stringify(data.user));
             router.push("/profile");

@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://api-production-48c5.up.railway.app";
+import { SOCKET_URL } from "./api-config";
 
 export const socket = io(SOCKET_URL, {
     transports: ["websocket"],

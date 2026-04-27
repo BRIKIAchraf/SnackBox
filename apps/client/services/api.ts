@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-48c5.up.railway.app/api/v1';
+import { API_BASE } from '../lib/api-config';
+
+const API_URL = API_BASE;
 
 export const api = axios.create({
   baseURL: API_URL,
