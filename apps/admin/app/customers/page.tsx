@@ -1,28 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import axios from "axios";
 import { User, Search, Phone, Mail, ShoppingBag, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useQuery } from "@tanstack/react-query";
+import { API_BASE } from "../../lib/api-config";
+
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: customers = [], isLoading } = useQuery({
+    queryKey: ["admin_customers"],
+    queryFn: async () => (await axios.get(`${API_BASE}/users`)).data
+  });
 
-  const fetchCustomers = async () => {
-    try {
-      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/users");
-      setCustomers(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  if (isLoading) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Chargement de la base clients...</div>;
 
   return (
     <div className="space-y-10">

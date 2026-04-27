@@ -1,51 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import axios from "axios";
 import { ShoppingBag, Users, DollarSign, Activity, TrendingUp, TrendingDown, Pizza, MessageSquare, Utensils } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useQuery } from "@tanstack/react-query";
+import { API_BASE } from "../../lib/api-config";
+
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    revenue: 0,
-    ordersCount: 0,
-    customersCount: 0, // Mocked for now
-    activePrep: 0,
-    bestSeller: "Loading..."
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ["dashboard_stats"],
+    queryFn: async () => {
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            window.location.href = "/login";
+            throw new Error("No token");
+        }
+        const res = await axios.get(`${API_BASE}/orders/stats`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return {
+            revenue: res.data.totalRevenue,
+            ordersCount: res.data.orderCount,
+            customersCount: res.data.customerCount,
+            activePrep: res.data.activeOrders,
+            bestSeller: res.data.bestSeller
+        };
+    },
+    refetchInterval: 30000, // Refresh every 30s
+    retry: (failureCount, error: any) => {
+        if (error.response?.status === 401) {
+            window.location.href = "/login";
+            return false;
+        }
+        return failureCount < 3;
+    }
   });
 
-  const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem("admin_token");
-      if (!token) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/orders/stats", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setStats({
-        revenue: data.totalRevenue,
-        ordersCount: data.orderCount,
-        customersCount: data.customerCount,
-        activePrep: data.activeOrders,
-        bestSeller: data.bestSeller
-      });
-    } catch (e: any) {
-      console.error(e);
-      if (e.response?.status === 401) {
-        window.location.href = "/login";
-      }
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000); // Poll every 30s
-    return () => clearInterval(interval);
-  }, []);
+  if (isLoading || !stats) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Initialisation du Centre de Contrôle...</div>;
 
   const STAT_CARDS = [
     { label: "Revenu Total", value: `${stats.revenue.toFixed(2)}€`, icon: DollarSign, trend: "+12.4%", color: "text-green-500", bg: "bg-green-500/10" },

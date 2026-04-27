@@ -1,38 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Save, Store, Clock, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { API_BASE } from "../../lib/api-config";
+
 export default function SettingsPage() {
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  const fetchSettings = async () => {
-    try {
-      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/settings");
-      setSettings(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin_settings"],
+    queryFn: async () => {
+        const res = await axios.get(`${API_BASE}/settings`);
+        setSettings(res.data);
+        return res.data;
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  const updateMutation = useMutation({
+    mutationFn: async (newSettings: any) => {
+        return axios.patch(`${API_BASE}/settings`, newSettings);
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin_settings"] });
+        queryClient.invalidateQueries({ queryKey: ["settings"] }); // For client sync
+        toast.success("Paramètres enregistrés !");
+    },
+    onError: () => toast.error("Erreur lors de l'enregistrement")
+  });
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await axios.patch("https://api-production-48c5.up.railway.app/api/v1/settings", settings);
-      alert("Settings saved successfully!");
-    } catch (e) { console.error(e); }
+    updateMutation.mutate(settings);
   };
 
-  if (loading) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Loading system configuration...</div>;
+  if (isLoading || !settings) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Chargement de la configuration...</div>;
 
   return (
     <div className="max-w-4xl space-y-12 pb-20">

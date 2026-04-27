@@ -1,50 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Plus, MapPin, Trash2, Power, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { API_BASE } from "../../lib/api-config";
+
 export default function AdminZonesPage() {
-    const [zones, setZones] = useState<any[]>([]);
+    const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "", fee: "", minOrder: "", estimatedTime: "" });
 
-    const fetchZones = async () => {
-        try {
-            const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/delivery-zones");
-            setZones(data);
-        } catch (e) {
-            console.error(e);
-        }
-    };
+    const { data: zones = [], isLoading } = useQuery({
+        queryKey: ["admin_zones"],
+        queryFn: async () => (await axios.get(`${API_BASE}/delivery-zones`)).data
+    });
 
-    useEffect(() => {
-        fetchZones();
-    }, []);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await axios.post("https://api-production-48c5.up.railway.app/api/v1/delivery-zones", {
-                name: formData.name,
-                fee: parseFloat(formData.fee),
-                minOrder: parseFloat(formData.minOrder),
-                estimatedTime: parseInt(formData.estimatedTime),
-                isActive: true
-            });
+    const createMutation = useMutation({
+        mutationFn: async (newZone: any) => {
+            return axios.post(`${API_BASE}/delivery-zones`, newZone);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin_zones"] });
+            toast.success("Zone créée !");
             setIsModalOpen(false);
             setFormData({ name: "", fee: "", minOrder: "", estimatedTime: "" });
-            fetchZones();
-        } catch (e) { console.error(e); }
+        },
+        onError: () => toast.error("Erreur lors de la création")
+    });
+
+    const toggleMutation = useMutation({
+        mutationFn: async ({ id, isActive }: { id: string, isActive: boolean }) => {
+            return axios.patch(`${API_BASE}/delivery-zones/${id}`, { isActive });
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_zones"] }),
+        onError: () => toast.error("Erreur de synchronisation")
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return axios.delete(`${API_BASE}/delivery-zones/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin_zones"] });
+            toast.success("Zone supprimée");
+        },
+        onError: () => toast.error("Erreur de suppression")
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        createMutation.mutate({
+            name: formData.name,
+            fee: parseFloat(formData.fee),
+            minOrder: parseFloat(formData.minOrder),
+            estimatedTime: parseInt(formData.estimatedTime),
+            isActive: true
+        });
     };
 
-    const toggleZone = async (id: string, current: boolean) => {
-        try {
-            await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/delivery-zones/${id}`, { isActive: !current });
-            fetchZones();
-        } catch (e) { console.error(e); }
+    const toggleZone = (id: string, current: boolean) => {
+        toggleMutation.mutate({ id, isActive: !current });
     };
+
+    if (isLoading) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Chargement des zones de livraison...</div>;
 
     return (
         <div className="space-y-10">
@@ -90,10 +112,9 @@ export default function AdminZonesPage() {
                         </div>
 
                         <button 
-                            onClick={async () => {
-                                if(confirm("Delete zone?")) {
-                                    await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/delivery-zones/${zone.id}`);
-                                    fetchZones();
+                            onClick={() => {
+                                if(confirm("Voulez-vous vraiment supprimer cette zone ?")) {
+                                    deleteMutation.mutate(zone.id);
                                 }
                             }}
                             className="w-full py-3 bg-red-500/5 border border-red-500/10 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-black text-[10px] uppercase tracking-widest"

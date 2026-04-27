@@ -1,24 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import axios from "axios";
 import { Mail, Clock, Trash2, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function ContactMessagesPage() {
-  const [messages, setMessages] = useState<any[]>([]);
+import { useQuery } from "@tanstack/react-query";
+import { API_BASE } from "../../lib/api-config";
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/contact");
-        setMessages(data);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchMessages();
-  }, []);
+export default function ContactMessagesPage() {
+  const { data: messages = [], isLoading } = useQuery({
+    queryKey: ["admin_messages"],
+    queryFn: async () => (await axios.get(`${API_BASE}/contact`)).data
+  });
+
+  if (isLoading) return <div className="p-20 text-center text-slate-500 font-black italic uppercase tracking-widest animate-pulse">Chargement des messages clients...</div>;
 
   return (
     <div className="space-y-10">
