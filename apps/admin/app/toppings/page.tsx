@@ -1,69 +1,87 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Plus, Trash2, Zap, DollarSign, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { API_BASE } from "../../lib/api-config";
 
 export default function ToppingsPage() {
-  const [toppings, setToppings] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: "", price: "" });
 
-  const fetchToppings = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/toppings");
-      setToppings(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const { data: toppings = [], isLoading } = useQuery({
+    queryKey: ["toppings"],
+    queryFn: async () => {
+      const { data } = await axios.get(`${API_BASE}/toppings?all=true`);
+      return data;
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchToppings();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
+  const createMutation = useMutation({
+    mutationFn: async (newTopping: any) => {
       const token = localStorage.getItem("admin_token");
-      await axios.post("https://api-production-48c5.up.railway.app/api/v1/toppings", {
-        name: formData.name,
-        price: parseFloat(formData.price),
-        available: true
-      }, {
+      return axios.post(`${API_BASE}/toppings`, newTopping, {
         headers: { Authorization: `Bearer ${token}` }
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["toppings"] });
+      toast.success("Ingrédient ajouté !");
       setIsModalOpen(false);
       setFormData({ name: "", price: "" });
-      fetchToppings();
-    } catch (e) { console.error(e); }
+    },
+    onError: () => toast.error("Erreur lors de l'ajout")
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      const token = localStorage.getItem("admin_token");
+      return axios.patch(`${API_BASE}/toppings/${id}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["toppings"] });
+      toast.success("Statut mis à jour !");
+    },
+    onError: () => toast.error("Erreur lors de la mise à jour")
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = localStorage.getItem("admin_token");
+      return axios.delete(`${API_BASE}/toppings/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["toppings"] });
+      toast.success("Ingrédient supprimé !");
+    },
+    onError: () => toast.error("Erreur lors de la suppression")
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate({
+      name: formData.name,
+      price: parseFloat(formData.price),
+      available: true
+    });
   };
 
-  const toggleAvailability = async (id: string, current: boolean) => {
-      try {
-          const token = localStorage.getItem("admin_token");
-          await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, { available: !current }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          fetchToppings();
-      } catch (e) { console.error(e); }
-  }
+  const toggleAvailability = (id: string, current: boolean) => {
+    updateMutation.mutate({ id, data: { available: !current } });
+  };
 
-  const deleteTopping = async (id: string) => {
-      if(!confirm("Supprimer cet ingrédient ?")) return;
-      try {
-          const token = localStorage.getItem("admin_token");
-          await axios.delete(`https://api-production-48c5.up.railway.app/api/v1/toppings/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          fetchToppings();
-      } catch (e) { console.error(e); }
-  }
+  const deleteTopping = (id: string) => {
+    if(!confirm("Supprimer cet ingrédient ?")) return;
+    deleteMutation.mutate(id);
+  };
 
   return (
     <div className="space-y-10">

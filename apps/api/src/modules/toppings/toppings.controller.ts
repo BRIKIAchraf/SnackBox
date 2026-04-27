@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ToppingsService } from './toppings.service';
 
 @Controller('toppings')
@@ -6,8 +6,9 @@ export class ToppingsController {
   constructor(private readonly toppingsService: ToppingsService) {}
 
   @Get()
-  findAll() {
-    return this.toppingsService.findAll();
+  findAll(@Query('all') all: string) {
+    const includeUnavailable = all === 'true';
+    return this.toppingsService.findAll(includeUnavailable);
   }
 
   @Post()

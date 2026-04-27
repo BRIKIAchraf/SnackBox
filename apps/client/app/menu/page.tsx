@@ -14,27 +14,56 @@ import { OrderModeModal } from '../../components/OrderModeModal';
 import { StoreClosedModal } from '../../components/StoreClosedModal';
 import { API_BASE } from '../../lib/api-config';
 
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+
 export default function MenuPage() {
-    const [categories, setCategories] = useState<any[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
-    const [offers, setOffers] = useState<any[]>([]);
-    const [toppings, setToppings] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('all');
-    const [loading, setLoading] = useState(true);
-    
     const [selectedPizza, setSelectedPizza] = useState<any>(null);
     const [isCustomizing, setIsCustomizing] = useState(false);
-    
     const [selectedOffer, setSelectedOffer] = useState<any>(null);
     const [isOfferCustomizing, setIsOfferCustomizing] = useState(false);
     const [isModeSelecting, setIsModeSelecting] = useState(false);
     const [isStoreClosedModal, setIsStoreClosedModal] = useState(false);
-    const [settings, setSettings] = useState<any>(null);
 
     const addItem = useCartStore((state: any) => state.addItem);
     const addOffer = useCartStore((state: any) => state.addOffer);
     const orderMode = useCartStore((state: any) => state.orderMode);
     const setOrderMode = useCartStore((state: any) => state.setOrderMode);
+
+    const { data: categories = [] } = useQuery({
+        queryKey: ["categories"],
+        queryFn: async () => (await axios.get(`${API_BASE}/categories`)).data
+    });
+
+    const { data: products = [] } = useQuery({
+        queryKey: ["products"],
+        queryFn: async () => (await axios.get(`${API_BASE}/products`)).data
+    });
+
+    const { data: offers = [] } = useQuery({
+        queryKey: ["offers"],
+        queryFn: async () => {
+            const res = await axios.get(`${API_BASE}/offers`);
+            return res.data.filter((o: any) => o.available);
+        }
+    });
+
+    const { data: toppings = [] } = useQuery({
+        queryKey: ["toppings"],
+        queryFn: async () => (await axios.get(`${API_BASE}/products/toppings`)).data
+    });
+
+    const { data: settings } = useQuery({
+        queryKey: ["settings"],
+        queryFn: async () => {
+            const res = await axios.get(`${API_BASE}/settings`);
+            if (res.data && !res.data.isOpen) {
+                setIsStoreClosedModal(true);
+            }
+            return res.data;
+        }
+    });
 
     useEffect(() => {
         if (!orderMode) {
@@ -42,40 +71,13 @@ export default function MenuPage() {
         }
     }, [orderMode]);
 
-    const fetchData = async () => {
-        try {
-            const [catRes, prodRes, offRes, topRes, setRes] = await Promise.all([
-                axios.get(`${API_BASE}/categories`),
-                axios.get(`${API_BASE}/products`),
-                axios.get(`${API_BASE}/offers`),
-                axios.get(`${API_BASE}/products/toppings`),
-                axios.get(`${API_BASE}/settings`)
-            ]);
-            setCategories(catRes.data);
-            setProducts(prodRes.data);
-            setOffers(offRes.data.filter((o: any) => o.available));
-            setToppings(topRes.data);
-            setSettings(setRes.data);
-            
-            if (setRes.data && !setRes.data.isOpen) {
-                setIsStoreClosedModal(true);
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
+    const isLoading = !products.length || !categories.length;
 
     const filteredProducts = activeCategory === 'all'
         ? products.filter(p => p.available)
         : products.filter(p => p.categoryId === activeCategory && p.available);
 
-    if (loading) return <div className="p-40 text-center font-black animate-pulse text-primary uppercase tracking-widest text-3xl italic">Préparation du Menu...</div>;
+    if (isLoading) return <div className="p-40 text-center font-black animate-pulse text-primary uppercase tracking-widest text-3xl italic">Préparation du Menu...</div>;
 
     return (
         <main className="min-h-screen bg-[#050505] text-white">

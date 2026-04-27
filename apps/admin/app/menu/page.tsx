@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, Activity, Utensils } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import { API_BASE } from "../../lib/api-config";
 
 export default function MenuPage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   
@@ -23,24 +22,57 @@ export default function MenuPage() {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const fetchData = async () => {
-    try {
-      const [pRes, cRes] = await Promise.all([
-        axios.get(`${API_BASE}/products`),
-        axios.get(`${API_BASE}/categories`)
-      ]);
-      setProducts(pRes.data);
-      setCategories(cRes.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => (await axios.get(`${API_BASE}/categories`)).data
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["admin_products"],
+    queryFn: async () => (await axios.get(`${API_BASE}/products`)).data
+  });
+
+  const upsertMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+        const token = localStorage.getItem("admin_token");
+        const config = {
+            headers: { 
+                "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${token}`
+            }
+        };
+        if (editingProduct) {
+            return axios.patch(`${API_BASE}/products/${editingProduct.id}`, data, config);
+        } else {
+            return axios.post(`${API_BASE}/products`, data, config);
+        }
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin_products"] });
+        toast.success(editingProduct ? "Produit mis à jour !" : "Produit créé !");
+        setIsModalOpen(false);
+    },
+    onError: () => toast.error("Erreur lors de l'enregistrement")
+  });
+
+  const availabilityMutation = useMutation({
+    mutationFn: async ({ id, available }: { id: string, available: boolean }) => {
+        return axios.patch(`${API_BASE}/products/${id}/availability`, { available });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_products"] }),
+    onError: () => toast.error("Erreur de synchronisation")
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+        return axios.delete(`${API_BASE}/products/${id}`);
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin_products"] });
+        toast.success("Produit supprimé");
+    },
+    onError: () => toast.error("Erreur de suppression")
+  });
 
   const openAddModal = () => {
     setEditingProduct(null);
@@ -64,56 +96,30 @@ export default function MenuPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const token = localStorage.getItem("admin_token");
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("description", formData.description);
-      data.append("price", formData.price.toString());
-      data.append("categoryId", formData.categoryId);
-      
-      if (selectedFiles.length > 0) {
-          selectedFiles.forEach(file => {
-              data.append("images", file);
-          });
-      } else if (formData.imageUrl) {
-          data.append("imageUrl", formData.imageUrl);
-      }
-
-      const config = {
-          headers: { 
-              "Content-Type": "multipart/form-data",
-              "Authorization": `Bearer ${token}`
-          }
-      };
-
-      if (editingProduct) {
-          await axios.patch(`${API_BASE}/products/${editingProduct.id}`, data, config);
-      } else {
-          await axios.post(`${API_BASE}/products`, data, config);
-      }
-
-      setIsModalOpen(false);
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      alert(editingProduct ? "Error updating product" : "Error creating product");
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("description", formData.description);
+    data.append("price", formData.price.toString());
+    data.append("categoryId", formData.categoryId);
+    
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            data.append("images", file);
+        });
+    } else if (formData.imageUrl) {
+        data.append("imageUrl", formData.imageUrl);
     }
+
+    upsertMutation.mutate(data);
   };
 
-  const toggleAvailability = async (id: string, current: boolean) => {
-    try {
-      await axios.patch(`${API_BASE}/products/${id}/availability`, { available: !current });
-      fetchData();
-    } catch (e) { console.error(e); }
+  const toggleAvailability = (id: string, current: boolean) => {
+    availabilityMutation.mutate({ id, available: !current });
   };
 
-  const softDelete = async (id: string) => {
-    if (!confirm("Are you sure? This will hide the product from the menu.")) return;
-    try {
-      await axios.delete(`${API_BASE}/products/${id}`);
-      fetchData();
-    } catch (e) { console.error(e); }
+  const softDelete = (id: string) => {
+    if (!confirm("Voulez-vous vraiment masquer ce produit du menu ?")) return;
+    deleteMutation.mutate(id);
   };
 
   return (

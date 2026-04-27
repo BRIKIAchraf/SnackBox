@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Plus, Edit2, Trash2, X, Activity, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { API_BASE } from "../../lib/api-config";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+
 export default function OffersPage() {
-  const [offers, setOffers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   
@@ -21,20 +23,59 @@ export default function OffersPage() {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const fetchData = async () => {
-    try {
+  const { data: offers = [], isLoading } = useQuery({
+    queryKey: ["offers"],
+    queryFn: async () => {
       const res = await axios.get(`${API_BASE}/offers`);
-      setOffers(res.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      return res.data;
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const upsertMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+        const token = localStorage.getItem("admin_token");
+        const config = {
+            headers: { 
+                "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${token}`
+            }
+        };
+        if (editingOffer) {
+            return axios.patch(`${API_BASE}/offers/${editingOffer.id}`, data, config);
+        } else {
+            return axios.post(`${API_BASE}/offers`, data, config);
+        }
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["offers"] });
+        toast.success(editingOffer ? "Pack mis à jour !" : "Pack créé !");
+        setIsModalOpen(false);
+    },
+    onError: () => toast.error("Erreur lors de l'enregistrement")
+  });
+
+  const availabilityMutation = useMutation({
+    mutationFn: async ({ id, available }: { id: string, available: boolean }) => {
+        return axios.patch(`${API_BASE}/offers/${id}/availability`, { available }, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` }
+        });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["offers"] }),
+    onError: () => toast.error("Erreur de synchronisation")
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+        return axios.delete(`${API_BASE}/offers/${id}`, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` }
+        });
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["offers"] });
+        toast.success("Pack supprimé");
+    },
+    onError: () => toast.error("Erreur de suppression")
+  });
 
   const openAddModal = () => {
     setEditingOffer(null);
@@ -57,59 +98,29 @@ export default function OffersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const token = localStorage.getItem("admin_token");
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("description", formData.description);
-      data.append("price", formData.price.toString());
-      
-      if (selectedFiles.length > 0) {
-          selectedFiles.forEach(file => {
-              data.append("images", file);
-          });
-      } else if (formData.imageUrl) {
-          data.append("imageUrl", formData.imageUrl);
-      }
-
-      const config = {
-          headers: { 
-              "Content-Type": "multipart/form-data",
-              "Authorization": `Bearer ${token}`
-          }
-      };
-
-      if (editingOffer) {
-          await axios.patch(`${API_BASE}/offers/${editingOffer.id}`, data, config);
-      } else {
-          await axios.post(`${API_BASE}/offers`, data, config);
-      }
-
-      setIsModalOpen(false);
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      alert(editingOffer ? "Error updating offer" : "Error creating offer");
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("description", formData.description);
+    data.append("price", formData.price.toString());
+    
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            data.append("images", file);
+        });
+    } else if (formData.imageUrl) {
+        data.append("imageUrl", formData.imageUrl);
     }
+
+    upsertMutation.mutate(data);
   };
 
-  const toggleAvailability = async (id: string, current: boolean) => {
-    try {
-      await axios.patch(`${API_BASE}/offers/${id}/availability`, { available: !current }, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` }
-      });
-      fetchData();
-    } catch (e) { console.error(e); }
+  const toggleAvailability = (id: string, current: boolean) => {
+    availabilityMutation.mutate({ id, available: !current });
   };
 
-  const softDelete = async (id: string) => {
+  const softDelete = (id: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce pack ?")) return;
-    try {
-      await axios.delete(`${API_BASE}/offers/${id}`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` }
-      });
-      fetchData();
-    } catch (e) { console.error(e); }
+    deleteMutation.mutate(id);
   };
 
   return (

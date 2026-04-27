@@ -23,10 +23,12 @@ import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    MediaModule,
     CacheModule.register({
       isGlobal: true,
       ttl: 300000,

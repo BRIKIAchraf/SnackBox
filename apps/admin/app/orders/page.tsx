@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Search, Eye, RefreshCcw, MoreHorizontal, X, User, MapPin, Phone, Clock, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { API_BASE } from "../../lib/api-config";
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
   PENDING_PAYMENT: { label: "En attente de paiement", color: "bg-orange-500/20 text-orange-400 border-orange-500/20" },
@@ -17,31 +20,30 @@ const STATUS_MAP: Record<string, { label: string, color: string }> = {
 };
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [userTypeFilter, setUserTypeFilter] = useState<'ALL' | 'REGISTERED' | 'GUEST'>('ALL');
   const [converting, setConverting] = useState(false);
   const [convertEmail, setConvertEmail] = useState("");
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get("https://api-production-48c5.up.railway.app/api/v1/orders");
-      setOrders(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ["admin_orders"],
+    queryFn: async () => {
+        const res = await axios.get(`${API_BASE}/orders`);
+        return res.data;
     }
-  };
+  });
 
-  const updateStatus = async (id: string, status: string) => {
-      try {
-          await axios.patch(`https://api-production-48c5.up.railway.app/api/v1/orders/${id}/status`, { status });
-          fetchOrders();
-      } catch (e) { console.error(e); }
-  }
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+        return axios.patch(`${API_BASE}/orders/${id}/status`, { status });
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
+        toast.success("Statut mis à jour !");
+    },
+    onError: () => toast.error("Erreur lors de la mise à jour")
+  });
 
   const convertGuest = async () => {
     if (!selectedOrder || !convertEmail) return;
@@ -49,26 +51,26 @@ export default function OrdersPage() {
     try {
         const token = localStorage.getItem("admin_token");
         await axios.post(
-            `https://api-production-48c5.up.railway.app/api/v1/users/convert-guest`, 
+            `${API_BASE}/users/convert-guest`, 
             { orderId: selectedOrder.id, email: convertEmail, phone: selectedOrder.customerPhone },
             { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert("Compte créé avec succès ! Le mot de passe a été généré.");
+        toast.success("Compte créé avec succès !");
         setSelectedOrder(null);
-        fetchOrders();
+        queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
     } catch (e: any) {
-        alert(e.response?.data?.message || "Erreur lors de la conversion");
+        toast.error(e.response?.data?.message || "Erreur lors de la conversion");
     } finally {
         setConverting(false);
         setConvertEmail("");
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  const updateStatus = (id: string, status: string) => {
+    statusMutation.mutate({ id, status });
+  };
 
-  const filteredOrders = orders.filter(o => 
+  const filteredOrders = orders.filter((o: any) => 
       userTypeFilter === 'ALL' || o.userType === userTypeFilter
   );
 

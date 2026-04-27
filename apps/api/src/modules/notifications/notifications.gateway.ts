@@ -35,6 +35,12 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     this.logger.log(`Client ${client.id} joined room: user_${userId}`);
   }
 
+  @SubscribeMessage('join_admin')
+  handleJoinAdmin(client: Socket) {
+    client.join('admins');
+    this.logger.log(`Client ${client.id} joined room: admins`);
+  }
+
   notifyNewOrder(order: any) {
     this.logger.log(`Broadcasting new order to admins: ${order.id}`);
     this.server.to('admins').emit('new_order', order);

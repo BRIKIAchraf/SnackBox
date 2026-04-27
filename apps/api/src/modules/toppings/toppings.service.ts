@@ -9,7 +9,10 @@ export class ToppingsService {
     private readonly notificationsGateway: NotificationsGateway
   ) {}
 
-  async findAll() {
+  async findAll(includeUnavailable = false) {
+    if (includeUnavailable) {
+      return this.prisma.topping.findMany();
+    }
     return this.prisma.topping.findMany({
       where: { available: true }
     });

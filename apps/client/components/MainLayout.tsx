@@ -1,26 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "./Footer";
 import { SOCKET_URL } from "../lib/api-config";
-import { ToastContainer, ToastType } from "./Toast";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const router = useRouter();
-    const [toasts, setToasts] = useState<any[]>([]);
-
-    const addToast = useCallback((message: string, type: ToastType = "info") => {
-        const id = Math.random().toString(36).substr(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-    }, []);
-
-    const removeToast = useCallback((id: string) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-    }, []);
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         let socket: any = null;
@@ -35,8 +28,11 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             });
 
             socket.on("menu_updated", () => {
-                addToast("Le menu a été mis à jour !", "info");
-                setTimeout(() => window.location.reload(), 2000);
+                toast.success("Le menu a été mis à jour !", {
+                    icon: '🍕',
+                    duration: 4000
+                });
+                queryClient.invalidateQueries();
             });
             
             socket.on("order_status_updated", (data: any) => {
@@ -50,10 +46,13 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 };
                 
                 if (statusMessages[data.status]) {
-                    addToast(statusMessages[data.status], data.status === 'CANCELLED' ? "error" : "order");
+                    toast(statusMessages[data.status], {
+                        icon: data.status === 'CANCELLED' ? '❌' : '🔔',
+                        duration: 6000
+                    });
                     new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3').play().catch(() => {});
                 }
-                router.refresh();
+                queryClient.invalidateQueries({ queryKey: ['orders'] });
             });
         } catch (e) {
             console.error("Socket connection failed", e);
@@ -62,7 +61,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         return () => {
             socket?.disconnect();
         };
-    }, [router, addToast]);
+    }, [router, queryClient]);
 
     return (
         <AnimatePresence mode="wait">
@@ -75,7 +74,6 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             >
                 {children}
                 <Footer />
-                <ToastContainer toasts={toasts} removeToast={removeToast} />
             </motion.div>
         </AnimatePresence>
     );

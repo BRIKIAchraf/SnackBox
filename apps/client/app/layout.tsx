@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   }
 };
 
+import QueryProvider from "../providers/QueryProvider";
+import { Toaster } from "react-hot-toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,9 +22,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <MainLayout>
-          {children}
-        </MainLayout>
+        <QueryProvider>
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: '#121215',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '1rem',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }
+            }}
+          />
+          <MainLayout>
+            {children}
+          </MainLayout>
+        </QueryProvider>
         <GoogleBadge />
       </body>
     </html>

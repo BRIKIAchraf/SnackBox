@@ -2,19 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_URL } from '../lib/api-config';
 
 export const useNotifications = () => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [latestOrder, setLatestOrder] = useState<any>(null);
 
     useEffect(() => {
-        const newSocket = io('https://api-production-48c5.up.railway.app', {
+        const newSocket = io(SOCKET_URL, {
             transports: ['websocket'],
-            upgrade: false
+            reconnectionAttempts: 5,
+            timeout: 10000,
         });
+        
         newSocket.on('connect', () => {
-            console.log('Connected to socket');
-            newSocket.emit('join_user', 'admins');
+            console.log('Admin connected to notifications');
+            newSocket.emit('join_admin');
         });
         setSocket(newSocket);
 

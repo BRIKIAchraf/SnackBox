@@ -1,4 +1,4 @@
-let rawUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-48c5.up.railway.app';
+let rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 if (rawUrl && !rawUrl.startsWith('http')) {
     rawUrl = `https://${rawUrl}`;
 }

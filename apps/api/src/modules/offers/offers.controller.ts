@@ -4,21 +4,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'offers',
-    allowed_formats: ['jpg', 'png', 'webp', 'jpeg'],
-    transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto', fetch_format: 'auto' }]
-  } as any,
-});
+import { MediaService } from '../media/media.service';
+import { memoryStorage } from 'multer';
 
 @Controller('offers')
 export class OffersController {
-  constructor(private readonly offersService: OffersService) {}
+  constructor(
+    private readonly offersService: OffersService,
+    private readonly mediaService: MediaService
+  ) {}
 
   @Get()
   findAll() {
@@ -33,14 +27,14 @@ export class OffersController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @UseInterceptors(FilesInterceptor('images', 5, { storage, limits: { fileSize: 5 * 1024 * 1024 } }))
-  create(@Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
-    const images = files ? files.map(file => file.path) : [];
+  @UseInterceptors(FilesInterceptor('images', 5, { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
+  async create(@Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
+    const images = files && files.length > 0 ? await this.mediaService.uploadFiles(files, 'offers') : [];
 
     const data = {
         ...body,
         price: parseFloat(body.price),
-        images: images.length > 0 ? images : undefined
+        images: images.length > 0 ? images : (body.imageUrl ? [body.imageUrl] : undefined)
     };
     return this.offersService.create(data, req.user.userId);
   }
@@ -55,9 +49,9 @@ export class OffersController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @UseInterceptors(FilesInterceptor('images', 5, { storage, limits: { fileSize: 5 * 1024 * 1024 } }))
-  update(@Param('id') id: string, @Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
-    const images = files ? files.map(file => file.path) : [];
+  @UseInterceptors(FilesInterceptor('images', 5, { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
+  async update(@Param('id') id: string, @Body() body: any, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req: any) {
+    const images = files && files.length > 0 ? await this.mediaService.uploadFiles(files, 'offers') : [];
 
     const data = {
         ...body,
